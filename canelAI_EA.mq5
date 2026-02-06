@@ -61,7 +61,7 @@ void init_expert_advisor()
 void check_active_status()
 {
     MqlDateTime time_struct;
-    TimeToStruct(TimeCurrent(), time_struct);
+    TimeToStruct(TimeLocal(), time_struct);
     bool current = on_active_duty;
     on_active_duty = (time_struct.hour >= start_hour) && (time_struct.hour <= end_hour);
 
