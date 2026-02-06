@@ -8,8 +8,8 @@
 #property version "1.00"
 
 // Inputs
-input int start_hour = 7;
-input int end_hour = 13;
+input string duty_time_start = "07:00";
+input string duty_time_end = "13:00";
 
 // Constants
 string status_board_name = "status_board_name";
@@ -25,7 +25,6 @@ datetime last_candle_datetime = 0;
 int OnInit()
 {
     Print("OnInit");
-    ObjectsDeleteAll(0);
     init_expert_advisor();
     return (INIT_SUCCEEDED);
 }
@@ -36,7 +35,7 @@ int OnInit()
 void OnDeinit(const int reason)
 {
     Print("OnDeinit");
-    ObjectsDeleteAll(0);
+    close_expert_advisor();
 }
 
 //+------------------------------------------------------------------+
@@ -54,18 +53,26 @@ void OnTick()
 
 void init_expert_advisor()
 {
+    ObjectsDeleteAll(0);
     create_status_board();
     check_active_status();
 }
 
+void close_expert_advisor()
+{
+    ObjectsDeleteAll(0);
+    on_active_duty = false;
+}
+
 void check_active_status()
 {
-    MqlDateTime time_struct;
-    TimeToStruct(TimeLocal(), time_struct);
-    bool current = on_active_duty;
-    on_active_duty = (time_struct.hour >= start_hour) && (time_struct.hour < end_hour);
+    bool previous_value = on_active_duty;
+    datetime current_time = TimeLocal();
+    datetime start = StringToTime(duty_time_start);
+    datetime end = StringToTime(duty_time_end);
+    on_active_duty = (current_time >= start) && (current_time < end);
 
-    if (current != on_active_duty)
+    if (previous_value != on_active_duty)
         update_status_board();
 }
 
