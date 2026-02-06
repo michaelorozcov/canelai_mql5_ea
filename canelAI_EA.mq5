@@ -63,7 +63,7 @@ void check_active_status()
     MqlDateTime time_struct;
     TimeToStruct(TimeLocal(), time_struct);
     bool current = on_active_duty;
-    on_active_duty = (time_struct.hour >= start_hour) && (time_struct.hour <= end_hour);
+    on_active_duty = (time_struct.hour >= start_hour) && (time_struct.hour < end_hour);
 
     if (current != on_active_duty)
         update_status_board();
