@@ -7,27 +7,26 @@
 #property link "https://www.mql5.com"
 #property version "1.00"
 
-// Inputs
-input string duty_time_start = "07:00";
-input string duty_time_end = "13:00";
+// Custom Classes
+#include "include/Candle.mqh";
+#include "include/Chart.mqh";
+#include "include/Time.mqh";
+#include "include/Trend.mqh";
 
-// Constants
-string status_board_name = "status_board_name";
-string status_board_label_active = "Active: ";
+// Inputs
+input string trading_time_start = "08:00";
+input string trading_time_end = "12:00";
+input int scan_hours_back = 6;
 
 // Global variables
-bool on_active_duty = false;
-datetime last_candle_datetime = 0;
+bool is_trading_time = false;
+int shift_candles = 0;
 
-//+------------------------------------------------------------------+
-//| Expert initialization function                                   |
-//+------------------------------------------------------------------+
-int OnInit()
-{
-    Print("OnInit");
-    init_expert_advisor();
-    return (INIT_SUCCEEDED);
-}
+// Instances of custom classes
+Chart chart;
+Candle candle;
+Time time;
+Trend trend;
 
 //+------------------------------------------------------------------+
 //| Expert deinitialization function                                 |
@@ -35,7 +34,42 @@ int OnInit()
 void OnDeinit(const int reason)
 {
     Print("OnDeinit");
-    close_expert_advisor();
+    ObjectsDeleteAll(0);
+
+    chart.deinit();
+    candle.deinit();
+    time.deinit();
+
+    is_trading_time = false;
+    shift_candles = 0;
+
+    // TODO ExpertRemove();
+}
+
+//+------------------------------------------------------------------+
+//| Expert initialization function                                   |
+//+------------------------------------------------------------------+
+int OnInit()
+{
+    Print("OnInit");
+    ObjectsDeleteAll(0);
+
+    chart.init();
+    candle.init();
+    time.init(trading_time_start, trading_time_end);
+
+    is_trading_time = time.is_trading_time();
+    shift_candles = candle.get_shift_candles(scan_hours_back);
+
+    chart.create_status_board(is_trading_time);
+
+    if (is_trading_time)
+    {
+        // TODO: trading logic
+        chart.create_scan_zone(shift_candles);
+    }
+
+    return (INIT_SUCCEEDED);
 }
 
 //+------------------------------------------------------------------+
@@ -43,75 +77,33 @@ void OnDeinit(const int reason)
 //+------------------------------------------------------------------+
 void OnTick()
 {
-    if (!is_new_candle())
+    check_trading_time();
+
+    if (!is_trading_time)
+    {
+        chart.delete_scan_zone();
+        return;
+    }
+
+    if (!chart.is_showing_scan_zone())
+        chart.create_scan_zone(shift_candles);
+
+    if (!candle.is_new_candle())
         return;
 
-    check_active_status();
+    chart.create_scan_zone(shift_candles);
+
+    // TODO: trading logic
 }
 
 //+------------------------------------------------------------------+
 
-void init_expert_advisor()
+void check_trading_time()
 {
-    ObjectsDeleteAll(0);
-    create_status_board();
-    check_active_status();
-}
-
-void close_expert_advisor()
-{
-    ObjectsDeleteAll(0);
-    on_active_duty = false;
-}
-
-void check_active_status()
-{
-    bool previous_value = on_active_duty;
-    datetime current_time = TimeLocal();
-    datetime start = StringToTime(duty_time_start);
-    datetime end = StringToTime(duty_time_end);
-    on_active_duty = (current_time >= start) && (current_time < end);
-
-    if (previous_value != on_active_duty)
-        update_status_board();
-}
-
-bool is_new_candle()
-{
-    datetime current_candle_datetime = iTime(_Symbol, PERIOD_CURRENT, 0);
-    if (current_candle_datetime != last_candle_datetime)
+    bool trading_time_new_value = time.is_trading_time();
+    if (is_trading_time != trading_time_new_value)
     {
-        last_candle_datetime = current_candle_datetime;
-        return true;
+        is_trading_time = trading_time_new_value;
+        chart.update_status_board(is_trading_time);
     }
-    return false;
-}
-
-void create_status_board()
-{
-    if (ObjectFind(0, status_board_name) != -1)
-        ObjectDelete(0, status_board_name);
-
-    ObjectCreate(0, status_board_name, OBJ_BUTTON, 0, 0, 0);
-    ObjectSetInteger(0, status_board_name, OBJPROP_XDISTANCE, 5);
-    ObjectSetInteger(0, status_board_name, OBJPROP_YDISTANCE, 25);
-
-    ObjectSetInteger(0, status_board_name, OBJPROP_XSIZE, 100);
-    ObjectSetInteger(0, status_board_name, OBJPROP_YSIZE, 20);
-
-    ObjectSetInteger(0, status_board_name, OBJPROP_BGCOLOR, clrDarkRed);
-    ObjectSetInteger(0, status_board_name, OBJPROP_COLOR, clrWhite);
-    ObjectSetInteger(0, status_board_name, OBJPROP_BORDER_TYPE, BORDER_RAISED);
-    ObjectSetString(0, status_board_name, OBJPROP_TEXT, status_board_label_active + "OFF");
-
-    ObjectSetInteger(0, status_board_name, OBJPROP_SELECTABLE, true);
-    ObjectSetInteger(0, status_board_name, OBJPROP_SELECTED, false);
-}
-
-void update_status_board()
-{
-    ObjectSetInteger(0, status_board_name, OBJPROP_BGCOLOR, on_active_duty ? clrDarkGreen : clrDarkRed);
-
-    string text = status_board_label_active + (on_active_duty ? "ON" : "OFF");
-    ObjectSetString(0, status_board_name, OBJPROP_TEXT, text);
 }
