@@ -57,8 +57,19 @@ private:
 
     bool is_trading_time()
     {
-        datetime current_time = TimeLocal();
-        return (current_time >= this.data.trading_time_start) && (current_time < this.data.trading_time_end);
+        MqlDateTime start_time;
+        TimeToStruct(this.data.trading_time_start, start_time);
+
+        MqlDateTime end_time;
+        TimeToStruct(this.data.trading_time_end, end_time);
+
+        MqlDateTime current_time;
+        TimeToStruct(TimeLocal(), current_time);
+
+        bool valid_hour = (current_time.hour >= start_time.hour) && (current_time.hour < end_time.hour);
+        bool valid_min = (current_time.min >= start_time.min);
+
+        return valid_hour && valid_min;
     }
 
     //------------------------------------------------------------------
