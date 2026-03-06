@@ -1,3 +1,4 @@
+/*
 class Zone
 {
 private:
@@ -48,39 +49,26 @@ public:
                 ObjectSetInteger(0, v_name, OBJPROP_COLOR, clrRed);
 
                 return;
-        */
-        // TODO: remove
 
-        datetime time_left = iTime(_Symbol, PERIOD_CURRENT, this.candle);
-        datetime time_rigth = iTime(_Symbol, PERIOD_CURRENT, candle_rigth_limit);
+// TODO: remove
 
-        ObjectCreate(0, this.name, OBJ_RECTANGLE, 0, time_left, top_price(), time_rigth, bottom_price());
-        ObjectSetInteger(0, this.name, OBJPROP_COLOR, clrRed);
-        ObjectSetInteger(0, this.name, OBJPROP_BACK, true);
-        ObjectSetInteger(0, this.name, OBJPROP_FILL, false);
-        ObjectSetInteger(0, this.name, OBJPROP_SELECTABLE, false);
-        ObjectSetInteger(0, this.name, OBJPROP_SELECTED, false);
-    }
+datetime time_left = iTime(_Symbol, PERIOD_CURRENT, this.candle);
+datetime time_rigth = iTime(_Symbol, PERIOD_CURRENT, candle_rigth_limit);
 
-    void delete_zone()
-    {
-        ObjectDelete(0, this.name);
-        ObjectDelete(0, "h_" + this.name);
-        ObjectDelete(0, "v_" + this.name);
-    }
-};
+ObjectCreate(0, this.name, OBJ_RECTANGLE, 0, time_left, top_price(), time_rigth, bottom_price());
+ObjectSetInteger(0, this.name, OBJPROP_COLOR, clrRed);
+ObjectSetInteger(0, this.name, OBJPROP_BACK, true);
+ObjectSetInteger(0, this.name, OBJPROP_FILL, false);
+ObjectSetInteger(0, this.name, OBJPROP_SELECTABLE, false);
+ObjectSetInteger(0, this.name, OBJPROP_SELECTED, false);
+}
 
-class PriceLevel
+void delete_zone()
 {
-public:
-    int candle;
-    double price;
-
-    PriceLevel() {}
-
-    PriceLevel(int ref_candle, double ref_price)
-    {
-        this.candle = ref_candle;
-        this.price = ref_price;
-    }
-};
+    ObjectDelete(0, this.name);
+    ObjectDelete(0, "h_" + this.name);
+    ObjectDelete(0, "v_" + this.name);
+}
+}
+;
+*/
