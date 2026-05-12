@@ -128,8 +128,6 @@ class TrendFollow {
         if (!broken_zone)
             return false;
 
-        Print("------------------------------------");
-
         if (!has_valid_breakout_size(zone))
             return false;
 
@@ -311,24 +309,32 @@ class TrendFollow {
         int today_losses = 0;
         int today_wins = 0;
 
-        for (int i = 0; i < today_deals; i++) {
+        for (int i = 0; i <= today_deals; i++) {
 
             ulong deal = HistoryDealGetTicket(i);
-            HistoryDealSelect(deal);
-
-            ulong order = HistoryDealGetInteger(deal, DEAL_ORDER);
-
-            if (order == 0)
+            if (deal == 0)
                 continue;
 
-            double profit = HistoryDealGetDouble(deal, DEAL_PROFIT);
+            ulong deal_order = HistoryDealGetInteger(deal, DEAL_ORDER);
+            if (deal_order == 0)
+                continue;
 
-            if (profit < 0)
+            int order_type = (int)HistoryOrderGetInteger(deal_order, ORDER_TYPE);
+            if ((order_type != ORDER_TYPE_BUY) && (order_type != ORDER_TYPE_SELL))
+                continue;
+
+            double deal_profit = HistoryDealGetDouble(deal, DEAL_PROFIT);
+
+            Print("---- Deal ", i, " | Ticket: ", deal, " | Order: ", deal_order, " | Profit: ", deal_profit);
+
+            if (deal_profit < 0)
                 today_losses++;
 
-            else if (profit > 0)
+            if (deal_profit > 0)
                 today_wins++;
         }
+
+        Print("---- Deals today: ", today_deals, " | Wins: ", today_wins, " | Losses: ", today_losses);
 
         if (args.daily_limit_losses > 0 && (today_losses >= args.daily_limit_losses))
             return true;
@@ -352,19 +358,11 @@ class TrendFollow {
         return profit_percentage >= args.monthly_limit_percentage;
     }
 
+    static bool has_reached_limits() {
+        return has_reached_daily_limit() || has_reached_monthly_win_limit();
+    }
+
     static void process_new_rate() {
-
-        bool open_positions = MarketOrder::has_open_positions();
-        if (open_positions)
-            return;
-
-        bool daily_limit = has_reached_daily_limit();
-        if (daily_limit)
-            return;
-
-        bool monthly_limit = has_reached_monthly_win_limit();
-        if (monthly_limit)
-            return;
 
         StructureBlock last_block;
         get_latest_valid_block(last_block);
@@ -390,8 +388,6 @@ class TrendFollow {
             return;
 
         make_trade(last_block, zone);
-
-        Print("------------------------------------");
     }
 };
 

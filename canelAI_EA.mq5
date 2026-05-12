@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Copyright 2026, MetaQuotes Ltd."
 #property link "https://www.mql5.com"
-#property version "1.0"
+#property version "1.1"
 
 #include "include/dto/AdvisorArgs.mqh"
 #include "include/dto/Session.mqh"
@@ -22,11 +22,11 @@ input MarketSessionEnum in_session = NEW_YORK; // Session
 // input SetupType in_setup_type = TREND_FOLLOW;  // Setup
 
 input group "==== Structure ====";
-input int in_structure_blocks_distance_max = 60; // Blocks distance max (in minutes)
+input int in_structure_blocks_distance_max = 120; // Blocks distance max (in minutes)
 
 input group "==== Breakout ====";
-input bool in_breakout_delta_check = true;  // Delta check (above zone)
-input bool in_breakout_volume_check = true; // Volume check (tick volume)
+input bool in_breakout_delta_check = false;  // Delta check (above zone)
+input bool in_breakout_volume_check = false; // Volume check (tick volume)
 
 input group "==== Risk Management ====";
 input double in_risk_percentage = 1.0;          // Risk %

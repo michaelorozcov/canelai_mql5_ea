@@ -138,9 +138,9 @@ class Advisor {
         MarketZone::delete_zones();
     }
 
-    bool has_reached_daily_limit() {
+    bool has_reached_limits() {
         if (this.data.setup_type == SetupType::TREND_FOLLOW)
-            return TrendFollow::has_reached_daily_limit();
+            return TrendFollow::has_reached_limits();
 
         return true;
     }
@@ -152,6 +152,8 @@ class Advisor {
 
     void process_new_rate() {
 
+        Print("------------------------------------");
+
         update_status_board();
 
         delete_market_analysis();
@@ -159,7 +161,7 @@ class Advisor {
         if (!is_trading_time())
             return;
 
-        if (has_reached_daily_limit())
+        if (has_reached_limits())
             return;
 
         set_market_analysis();
