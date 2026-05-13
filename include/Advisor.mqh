@@ -60,8 +60,10 @@ class Advisor {
 
     void process_new_tick() {
 
-        if (MarketOrder::has_open_positions())
+        if (MarketOrder::has_open_positions()) {
             check_open_positions();
+            return;
+        }
 
         if (!is_new_rate())
             return;
