@@ -1,4 +1,7 @@
 // Constants
+const string BOARD_ITEM_STRATEGY_NAME = "status_board_item_strategy";
+const string BOARD_ITEM_STRATEGY_VALUE = "Strategy: ";
+
 const string BOARD_ITEM_ACTIVE_NAME = "status_board_item_active";
 const string BOARD_ITEM_ACTIVE_VALUE = "Active: ";
 
@@ -26,7 +29,7 @@ const string BOARD_ITEM_BREAKOUT_VALUE = "Breakout: {b}";
 const string BOARD_NAME = "status_board_name";
 const int BOARD_XDISTANCE = 5;
 const int BOARD_YDISTANCE = 25;
-const int BOARD_XSIZE = 110;
+const int BOARD_XSIZE = 175;
 const int BOARD_YSIZE = 25;
 
 class StatusBoard {
@@ -96,15 +99,18 @@ class StatusBoard {
     static void update(AdvisorArgs& data) {
         delete_labels();
 
-        bool is_trading_time = MarketSession::is_trading_time(data.session);
+        if (!data.visual_mode)
+            return;
 
-        string active_text = BOARD_ITEM_ACTIVE_VALUE + (is_trading_time ? "ON" : "OFF");
+        string strategy_name = EnumToString(data.strategy);
+        string strategy_text = BOARD_ITEM_STRATEGY_VALUE + strategy_name;
+        create_label(BOARD_ITEM_STRATEGY_NAME, strategy_text);
+
+        bool trading_time = MarketSession::is_trading_time(data.session);
+        string active_text = BOARD_ITEM_ACTIVE_VALUE + (trading_time ? "ON" : "OFF");
         create_label(BOARD_ITEM_ACTIVE_NAME, active_text);
 
-        set_board_color(is_trading_time ? clrGreen : clrRed);
-
-        if (!is_trading_time)
-            return;
+        set_board_color(trading_time ? clrGreen : clrRed);
     }
 };
 

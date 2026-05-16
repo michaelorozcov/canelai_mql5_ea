@@ -66,6 +66,9 @@ class MarketTrend {
     static bool are_trend_pivots(
         PivotPoint& pivots[], TrendType trend_type, TrendConfig& config) {
 
+        if (ArraySize(pivots) < 2)
+            return false;
+
         double threshold = get_trend_threshold(pivots, config);
 
         for (int i = 0; i < (ArraySize(pivots) - 1); i++) {
@@ -90,11 +93,11 @@ class MarketTrend {
         return true;
     }
 
-    static void get_init_trend(Trend& trend) {
+    static void get_init_trend(Trend& trend, int lowest_rate_index) {
         trend.clear();
 
-        int start_index = RatesUtils::get_analysis_start_index();
-        int end_index = ANALYSIS_LIMIT_LOWEST_INDEX;
+        int start_index = RatesUtils::get_highest_rate_index();
+        int end_index = lowest_rate_index;
 
         for (int i = start_index; i > end_index; i--) {
 
