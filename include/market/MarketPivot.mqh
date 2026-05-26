@@ -2,14 +2,8 @@ class MarketPivot {
 
   private:
     static string chart_pivot_names[];
-
     static PivotPoint highs_order_1[];
-    static PivotPoint highs_order_2[];
-    static PivotPoint highs_order_3[];
-
     static PivotPoint lows_order_1[];
-    static PivotPoint lows_order_2[];
-    static PivotPoint lows_order_3[];
 
     static void delete_chart_pivots() {
         for (int i = 0; i < ArraySize(chart_pivot_names); i++)
@@ -47,14 +41,10 @@ class MarketPivot {
         MqlRates rate;
         RatesUtils::get_rate(rate, pivot.rate_index);
 
-        double base_price = get_pivot_price(pivot, true);
-        double adjustment =
-            CHART_PIVOT_PRICE_MARGIN * ((pivot.type == PIVOT_TYPE_HIGH) ? 1 : -1);
-
         chart_pivot.name = "P" + type + order + "_" + IntegerToString(pivot.rate_index);
         chart_pivot.colour = colour;
         chart_pivot.time = rate.time;
-        chart_pivot.price = base_price + (adjustment * factor);
+        chart_pivot.price = get_pivot_price(pivot, true);
     }
 
     static void draw_pivot_point(PivotPoint& pivot) {
@@ -98,19 +88,18 @@ class MarketPivot {
         return false;
     }
 
-    static void set_first_order_pivots(PivotPoint& dest[], PivotType type) {
+    static void set_first_order_pivots(
+        PivotPoint& dest[], PivotType type, int start, int end, int strength) {
+
         ArrayUtils::clear(dest);
 
-        int start = RatesUtils::get_highest_rate_index() - FIRST_ORDER_PIVOT_STRENGTH;
-        int end = ANALYSIS_LIMIT_LOWEST_INDEX + FIRST_ORDER_PIVOT_STRENGTH;
-
         for (int i = start; i >= end; i--) {
-            for (int j = 1; j <= FIRST_ORDER_PIVOT_STRENGTH; j++) {
+            for (int j = 1; j <= strength; j++) {
 
                 if (!is_pivot(type, (i + j), i, (i - j)))
                     break;
 
-                if (j == FIRST_ORDER_PIVOT_STRENGTH) {
+                if (j == strength) {
                     PivotPoint pivot = PivotPoint(i, type, PIVOT_ORDER_1);
                     ArrayUtils::add_item(dest, pivot);
                 }
@@ -125,40 +114,24 @@ class MarketPivot {
 
         // Data
         ArrayUtils::clear(highs_order_1);
-        ArrayUtils::clear(highs_order_2);
-        ArrayUtils::clear(highs_order_3);
         ArrayUtils::clear(lows_order_1);
-        ArrayUtils::clear(lows_order_2);
-        ArrayUtils::clear(lows_order_3);
     }
 
-    static void set_pivot_points(AdvisorArgs& data) {
+    static void set_pivot_points(int lowest_rate_index, bool visual_mode) {
         delete_pivot_points();
 
         // Order 1
-        set_first_order_pivots(highs_order_1, PIVOT_TYPE_HIGH);
-        set_first_order_pivots(lows_order_1, PIVOT_TYPE_LOW);
+        int strength = FIRST_ORDER_PIVOT_STRENGTH;
+        int start = RatesUtils::get_highest_rate_index() - strength;
+        int end = lowest_rate_index + strength;
 
-        // TODO
-        // Order 2
-        // set_major_order_pivots(highs_order_2, highs_order_1, PIVOT_TYPE_HIGH, PIVOT_ORDER_2);
-        // set_major_order_pivots(lows_order_2, lows_order_1, PIVOT_TYPE_LOW, PIVOT_ORDER_2);
+        set_first_order_pivots(highs_order_1, PIVOT_TYPE_HIGH, start, end, strength);
+        set_first_order_pivots(lows_order_1, PIVOT_TYPE_LOW, start, end, strength);
 
-        // Order 3
-        // set_major_order_pivots(highs_order_3, highs_order_2, PIVOT_TYPE_HIGH, PIVOT_ORDER_3);
-        // set_major_order_pivots(lows_order_3, lows_order_2, PIVOT_TYPE_LOW, PIVOT_ORDER_3);
-
-        if (!data.visual_mode)
-            return;
-
-        draw_pivot_points(highs_order_1);
-        draw_pivot_points(lows_order_1);
-
-        draw_pivot_points(highs_order_2);
-        draw_pivot_points(lows_order_2);
-
-        draw_pivot_points(highs_order_3);
-        draw_pivot_points(lows_order_3);
+        if (visual_mode) {
+            draw_pivot_points(highs_order_1);
+            draw_pivot_points(lows_order_1);
+        }
     }
 
     static void get_pivot_points(
@@ -167,24 +140,10 @@ class MarketPivot {
         ArrayUtils::clear(dest);
         bool highs = (type == PIVOT_TYPE_HIGH);
 
-        if (order == PIVOT_ORDER_1) {
-            if (highs)
-                ArrayUtils::copy(dest, highs_order_1);
-            else
-                ArrayUtils::copy(dest, lows_order_1);
-
-        } else if (order == PIVOT_ORDER_2) {
-            if (highs)
-                ArrayUtils::copy(dest, highs_order_2);
-            else
-                ArrayUtils::copy(dest, lows_order_2);
-
-        } else if (order == PIVOT_ORDER_3) {
-            if (highs)
-                ArrayUtils::copy(dest, highs_order_3);
-            else
-                ArrayUtils::copy(dest, lows_order_3);
-        }
+        if (highs)
+            ArrayUtils::copy(dest, highs_order_1);
+        else
+            ArrayUtils::copy(dest, lows_order_1);
     }
 
     static void get_pivot_points(
@@ -356,11 +315,5 @@ class MarketPivot {
 };
 
 static PivotPoint MarketPivot::highs_order_1[];
-static PivotPoint MarketPivot::highs_order_2[];
-static PivotPoint MarketPivot::highs_order_3[];
-
 static PivotPoint MarketPivot::lows_order_1[];
-static PivotPoint MarketPivot::lows_order_2[];
-static PivotPoint MarketPivot::lows_order_3[];
-
 static string MarketPivot::chart_pivot_names[];

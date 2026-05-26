@@ -15,17 +15,16 @@ class RatesUtils {
             0, name, OBJPROP_STYLE, RATES_LIMIT_STYLE);
     }
 
-    static void draw_rates_limits() {
-        if (ArraySize(rates) < 2)
-            return;
+    static bool are_valid_rates() {
+        return (ArraySize(rates) > 0);
+    }
 
-        draw_limit(
-            RATES_LIMIT_LEFT,
-            get_rate_time(get_analysis_start_index()));
+    static bool is_valid_rate_index(int rate_index) {
+        return (rate_index >= 0) && (rate_index < ArraySize(rates));
+    }
 
-        draw_limit(
-            RATES_LIMIT_RIGHT,
-            get_rate_time(ANALYSIS_LIMIT_LOWEST_INDEX));
+    static bool is_valid_rate_access(int rate_index) {
+        return are_valid_rates() && is_valid_rate_index(rate_index);
     }
 
   public:
@@ -35,37 +34,31 @@ class RatesUtils {
         ArrayUtils::clear(rates);
     }
 
-    static void set_rates(AdvisorArgs& data) {
+    static void set_rates(int shift_minutes, int lowest_rate_index, bool visual_mode) {
 
         ArrayUtils::clear(rates);
         ArraySetAsSeries(rates, true);
 
-        CopyRates(
-            _Symbol, _Period, 0,
-            get_shift_rates(_Period, RATES_LIMIT_SHIFT_MINUTES),
-            rates);
+        int shift = get_shift_rates(shift_minutes);
 
-        if (data.visual_mode)
-            draw_rates_limits();
+        CopyRates(_Symbol, _Period, 0, shift, rates);
+
+        if (visual_mode) {
+            draw_limit(
+                RATES_LIMIT_LEFT, get_rate_time(get_highest_rate_index()));
+            draw_limit(
+                RATES_LIMIT_RIGHT, get_rate_time(lowest_rate_index));
+        }
     }
 
-    static void get_rate(MqlRates& rate, int rate_index) {
-        if ((rate_index >= 0) && (rate_index < ArraySize(rates)))
-            rate = rates[rate_index];
-    }
-
-    static int get_shift_rates(ENUM_TIMEFRAMES period, int minutes) {
+    static int get_shift_rates(int minutes) {
         int session_seconds = (minutes * 60);
-        int period_seconds = PeriodSeconds(period);
+        int period_seconds = PeriodSeconds(_Period);
         return (session_seconds / period_seconds);
     }
 
     static int get_highest_rate_index() {
         return (ArraySize(rates) - 1);
-    }
-
-    static int get_analysis_start_index() {
-        return get_shift_rates(_Period, ANALYSIS_LIMIT_SHIFT_MINUTES);
     }
 
     static bool is_bullish_rate(int rate_index) {
@@ -80,10 +73,13 @@ class RatesUtils {
         return (rate.open > rate.close);
     }
 
+    static void get_rate(MqlRates& rate, int rate_index) {
+        if (is_valid_rate_access(rate_index))
+            rate = rates[rate_index];
+    }
+
     static datetime get_rate_time(int rate_index) {
-        MqlRates rate;
-        get_rate(rate, rate_index);
-        return rate.time;
+        return is_valid_rate_access(rate_index) ? rates[rate_index].time : 0;
     }
 
     static double get_rate_lowest_price(int rate_index, bool wicks) {
@@ -149,9 +145,7 @@ class RatesUtils {
     }
 
     static long get_rate_volume(int rate_index) {
-        MqlRates rate;
-        get_rate(rate, rate_index);
-        return rate.tick_volume;
+        return is_valid_rate_access(rate_index) ? rates[rate_index].tick_volume : 0;
     }
 
     static double get_average_volume(int start_index, int end_index) {

@@ -180,10 +180,10 @@ class MarketStructure {
         }
     }
 
-    static void get_init_trend(Trend& init_trend, AdvisorArgs& data) {
-        MarketTrend::get_init_trend(init_trend);
+    static void get_init_trend(Trend& init_trend, int lowest_rate_index, bool visual_mode) {
+        MarketTrend::get_init_trend(init_trend, lowest_rate_index);
 
-        if (data.visual_mode)
+        if (visual_mode)
             MarketTrend::draw_trend(init_trend);
     }
 
@@ -191,12 +191,13 @@ class MarketStructure {
     static void delete_market_structure() {
         delete_chart_structure_blocks();
         ArrayUtils::clear(structure_blocks_impulses);
+        MarketTrend::delete_trends();
     }
 
-    static void set_market_structure(AdvisorArgs& data) {
+    static void set_market_structure(int lowest_rate_index, bool visual_mode) {
 
         Trend init_trend;
-        get_init_trend(init_trend, data);
+        get_init_trend(init_trend, lowest_rate_index, visual_mode);
 
         if (!init_trend.is_valid())
             return;
@@ -228,7 +229,7 @@ class MarketStructure {
             previous_impulse = new_impulse;
         }
 
-        if (data.visual_mode)
+        if (visual_mode)
             draw_structure_blocks();
     }
 
