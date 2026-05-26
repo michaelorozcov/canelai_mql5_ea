@@ -1,20 +1,22 @@
 #include "../dto/PivotPoint.mqh"
 #include "../dto/Trend.mqh"
 
-// Rates
-const int RATES_LIMIT_SHIFT_MINUTES = 370;
-const string RATES_LIMIT_LEFT = "rates_limit_left";
-const string RATES_LIMIT_RIGHT = "rates_limit_right";
-const color RATES_LIMIT_COLOR = clrPaleGoldenrod;
-const ENUM_LINE_STYLE RATES_LIMIT_STYLE = STYLE_DASH;
+const int ADVISOR_TIMER_INTERVAL_SECONDS = 1;
+const int ADVISOR_TIMER_INTERVAL_MILLISECONDS = 250;
 
 // Analysis
-const int ANALYSIS_LIMIT_SHIFT_MINUTES = 360;
-const int ANALYSIS_LIMIT_LOWEST_INDEX = 2;
+const MarketSessionEnum ANALYSIS_SESSION = MarketSessionEnum::NEW_YORK;
+const int ANALYSIS_SHIFT_MINUTES = 370;
+const int ANALYSIS_LOWEST_INDEX = 2;
+
+// Rates
+const string RATES_LIMIT_LEFT = "rates_limit_left";
+const string RATES_LIMIT_RIGHT = "rates_limit_right";
+const color RATES_LIMIT_COLOR = clrGold;
+const ENUM_LINE_STYLE RATES_LIMIT_STYLE = STYLE_DASH;
 
 // Pivot Points
 const int FIRST_ORDER_PIVOT_STRENGTH = 5;
-const double CHART_PIVOT_PRICE_MARGIN = 2;
 const color CHART_PIVOT_COLOR_1 = clrBlue;
 const color CHART_PIVOT_COLOR_2 = clrYellow;
 const color CHART_PIVOT_COLOR_3 = clrBrown;
