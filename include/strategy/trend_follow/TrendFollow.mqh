@@ -7,11 +7,7 @@ class TrendFollow : public NewRateBased {
     }
 
     void on_tick() override {
-        process_open_positions();
-    }
-
-    void on_new_rate() override {
-        process_new_rate();
+        process_new_tick();
     }
 
     void on_trading_time_change(bool trading_time) override {
@@ -33,12 +29,17 @@ class TrendFollow : public NewRateBased {
         MarketOrder::close_open_positions(this.ctrade, this.magic_number);
     }
 
-    void process_open_positions() {
-        if (!has_open_positions())
+    void process_new_tick() {
+
+        if (has_open_positions()) {
+            apply_breakeven();
+            return;
+        }
+
+        if (!is_new_rate())
             return;
 
-        if (args.breakeven_value > 0.0)
-            apply_breakeven();
+        process_new_rate();
     }
 
     bool has_open_positions() {
