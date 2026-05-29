@@ -80,10 +80,10 @@ class MarketPivot {
         RatesUtils::get_rate(next, next_index);
 
         if (type == PIVOT_TYPE_HIGH)
-            return (current.high > previous.high) && (current.high > next.high);
+            return (current.high >= previous.high) && (current.high >= next.high);
 
         else if (type == PIVOT_TYPE_LOW)
-            return (current.low < previous.low) && (current.low < next.low);
+            return (current.low <= previous.low) && (current.low <= next.low);
 
         return false;
     }
