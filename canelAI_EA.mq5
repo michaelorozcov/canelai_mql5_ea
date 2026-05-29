@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Copyright 2026, MetaQuotes Ltd."
 #property link "https://www.mql5.com"
-#property version "2.0"
+#property version "2.1"
 
 #include <Trade\Trade.mqh>
 
