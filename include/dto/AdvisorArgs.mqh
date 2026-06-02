@@ -12,6 +12,7 @@ struct AdvisorArgs {
     StrategyType strategy;
     MarketSessionEnum session;
     bool visual_mode;
+    bool log_file;
 
     TrendFollowArgs trend_follow;
     TrendFollowHFTArgs trend_follow_hft;
@@ -21,5 +22,6 @@ struct AdvisorArgs {
         strategy = StrategyType::TREND_FOLLOW;
         session = MarketSessionEnum::NEW_YORK;
         visual_mode = true;
+        log_file = true;
     }
 };

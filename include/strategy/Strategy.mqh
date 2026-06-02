@@ -1,3 +1,5 @@
+#include "../../include/dto/AdvisorArgs.mqh"
+
 enum StrategyType {
     TREND_FOLLOW,
     TREND_FOLLOW_HFT,
@@ -7,27 +9,30 @@ enum StrategyType {
 class Strategy {
 
   private:
-    ulong calculate_magic_number() {
-        string strategy_name = EnumToString(advisor_args.strategy);
-        string session_name = EnumToString(advisor_args.session);
-        string symbol_name = _Symbol;
-        string period_name = IntegerToString(_Period);
-        string base = strategy_name + "_" + session_name + "_" + symbol_name + "_" + period_name;
+    ulong calculate_magic_number(string hash_base) {
         ulong hash = 0;
-
-        for (int i = 0; i < StringLen(base); i++)
-            hash += (ulong)StringGetCharacter(base, i);
-
+        for (int i = 0; i < StringLen(hash_base); i++)
+            hash += (ulong)StringGetCharacter(hash_base, i);
         return hash;
     }
 
   public:
     CTrade ctrade;
+    string advisor_id;
     ulong magic_number;
 
-    Strategy() {
-        this.magic_number = calculate_magic_number();
-        ctrade.SetExpertMagicNumber(this.magic_number);
+    void set_advisor_id(string param_advisor_id) {
+        this.advisor_id = param_advisor_id;
+        this.magic_number = this.calculate_magic_number(this.advisor_id);
+        this.ctrade.SetExpertMagicNumber(this.magic_number);
+    }
+
+    virtual void on_init() {
+        // to be implemented by specific strategies
+    }
+
+    virtual void on_deinit() {
+        // to be implemented by specific strategies
     }
 
     virtual void base_on_tick() {

@@ -1,11 +1,25 @@
 class MarketSession {
 
   private:
-    static bool inside_work_day(datetime date) {
-        MqlDateTime date_struct;
-        TimeToStruct(date, date_struct);
+    static bool inside_work_day(MqlDateTime& date_struct) {
         int day = date_struct.day_of_week;
         return (day >= ENUM_DAY_OF_WEEK::MONDAY) && (day <= ENUM_DAY_OF_WEEK::FRIDAY);
+    }
+
+    static void set_session_detail(
+        MqlDateTime& start, MqlDateTime& end, MarketSessionTime& session) {
+        set_session_hour_min(start, session.start);
+        set_session_hour_min(end, session.end);
+    }
+
+    static void set_session_hour_min(
+        MqlDateTime& dest, string session_hour_min) {
+
+        string hour_min[];
+        StringSplit(session_hour_min, ':', hour_min);
+        dest.hour = (int)StringToInteger(hour_min[0]);
+        dest.min = (int)StringToInteger(hour_min[1]);
+        dest.sec = 0;
     }
 
   public:
@@ -13,14 +27,20 @@ class MarketSession {
     static bool is_trading_time(MarketSessionEnum session) {
 
         datetime current_date = TimeGMT(); // UTC
-        if (!inside_work_day(current_date))
+        MqlDateTime struct_date;
+        TimeToStruct(current_date, struct_date);
+
+        if (!inside_work_day(struct_date))
             return false;
 
         MarketSessionTime session_time = MARKET_SESSIONS[session];
-        datetime session_start = StringToTime(session_time.start);
-        datetime session_end = StringToTime(session_time.end);
+        MqlDateTime struct_start = struct_date, struct_end = struct_date;
+        set_session_detail(struct_start, struct_end, session_time);
 
-        return (current_date >= session_start) && (current_date < session_end);
+        datetime start_date = StructToTime(struct_start);
+        datetime end_date = StructToTime(struct_end);
+
+        return (current_date >= start_date) && (current_date < end_date);
     }
 
     static datetime get_today_init_time() {

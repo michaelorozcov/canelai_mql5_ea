@@ -1,8 +1,13 @@
 #include "../dto/PivotPoint.mqh"
 #include "../dto/Trend.mqh"
 
-const int ADVISOR_TIMER_INTERVAL_SECONDS = 1;
-const int ADVISOR_TIMER_INTERVAL_MILLISECONDS = 250;
+// Timer
+const int ADVISOR_TIMER_INTERVAL_MILLISECONDS = 1000;
+
+// Logs
+const string LOGS_RELATIVE_PATH = "canelai\\logs\\";
+const string LOGS_FILENAME_TEMPLATE = LOGS_RELATIVE_PATH + "%s_%s.txt";
+const string LOGS_ENTRY_TEMPLATE = "%s - %s";
 
 // Analysis
 const MarketSessionEnum ANALYSIS_SESSION = MarketSessionEnum::NEW_YORK;

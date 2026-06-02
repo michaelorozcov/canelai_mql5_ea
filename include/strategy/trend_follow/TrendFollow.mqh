@@ -1,9 +1,16 @@
+#include "../../../include/utils/LogUtils.mqh"
+
 class TrendFollow : public NewRateBased {
 
   public:
     TrendFollow(AdvisorArgs& advisor_args_data) {
         this.args = advisor_args_data.trend_follow;
         this.visual_mode = advisor_args_data.visual_mode;
+        this.log_file = advisor_args_data.log_file;
+    }
+
+    void on_init() {
+        process_new_rate();
     }
 
     void on_tick() override {
@@ -17,9 +24,18 @@ class TrendFollow : public NewRateBased {
   private:
     TrendFollowArgs args;
     bool visual_mode;
+    bool log_file;
+
+    void log(string message) {
+        if (this.log_file)
+            LogUtils::log(this.advisor_id, message);
+        Print(message);
+    }
 
     void process_trading_time_change(bool trading_time) {
-        if (!trading_time) {
+        if (trading_time) {
+            process_new_rate();
+        } else {
             delete_market_analysis();
             close_open_positions();
         }
@@ -98,40 +114,56 @@ class TrendFollow : public NewRateBased {
     }
 
     void process_new_rate() {
-        if (has_open_positions())
+
+        log("_____ Processing new rate _____");
+
+        if (has_open_positions()) {
+            log("It has open positions");
             return;
+        }
 
         delete_market_analysis();
 
-        if (has_reached_limits())
+        if (has_reached_limits()) {
+            log("It has reached limits");
             return;
+        }
 
         set_market_analysis();
 
         StructureBlock last_block;
         get_latest_valid_block(last_block);
-        if (!last_block.is_valid())
+        if (!last_block.is_valid()) {
+            log("Last_block not valid");
             return;
+        }
 
         bool upheld_block = is_upheld_block(last_block);
-        if (!upheld_block)
+        if (!upheld_block) {
+            log("Last block limit not upheld");
             return;
+        }
 
         Zone zone;
         MarketZone::get_zone_from_block(
             zone, last_block, false, TF_ANALYSIS_LOWEST_INDEX);
 
         bool upheld_zone = is_upheld_zone(zone);
-        if (!upheld_zone)
+        if (!upheld_zone) {
+            log("Zone limit not upheld");
             return;
+        }
 
         if (this.visual_mode)
             MarketZone::draw_zone(zone, TF_ANALYSIS_LOWEST_INDEX);
 
         bool valid_breakout = is_valid_breakout(zone, last_block);
-        if (!valid_breakout)
+        if (!valid_breakout) {
+            log("Breakout not valid");
             return;
+        }
 
+        log("Proceed to trade");
         make_trade(last_block, zone);
     }
 
@@ -256,7 +288,12 @@ class TrendFollow : public NewRateBased {
         double break_size = NormalizeDouble(
             RatesUtils::get_rate_size(args.breakout_rate_index), 1);
 
-        Print("---- break_size: ", break_size, " | size_min: ", size_min, " | size_max: ", size_max);
+        string msg_size_log = StringFormat(
+            "Size min-max: [%s - %s] | Break size: %s",
+            DoubleToString(size_min, _Digits),
+            DoubleToString(size_max, _Digits),
+            DoubleToString(break_size, _Digits));
+        log(msg_size_log);
 
         return (break_size >= size_min) && (break_size <= size_max);
     }
@@ -269,7 +306,11 @@ class TrendFollow : public NewRateBased {
         double zone_volume = get_rates_average_volume(
             zone.rate_index, TF_ANALYSIS_LOWEST_INDEX);
 
-        Print("---- Break Vol: ", breakout_volume, " | Zone Vol: ", zone_volume);
+        string msg_volume_log = StringFormat(
+            "Zone Vol: %s | Break Vol: %s",
+            DoubleToString(zone_volume, _Digits),
+            DoubleToString(breakout_volume, _Digits));
+        log(msg_volume_log);
 
         return (breakout_volume >= zone_volume);
     }
@@ -283,13 +324,26 @@ class TrendFollow : public NewRateBased {
         int diff_minutes = (int)((current_time - breakout_time) / 60);
         int shift_rates = RatesUtils::get_shift_rates(diff_minutes);
 
-        if (shift_rates != args.breakout_rate_index)
+        if (shift_rates != rate_index) {
+            string msg_index_log = StringFormat(
+                "Breakout index not consistent: shift_rates %s | rate_index %s",
+                IntegerToString(shift_rates),
+                IntegerToString(rate_index));
+            log(msg_index_log);
             return false;
+        }
 
         double delta = args.breakout_delta_check ? zone.treshold : 0.0;
         bool broken_zone = MarketZone::is_broken_by_rate(zone, rate_index, delta);
-        if (!broken_zone)
+        if (!broken_zone) {
+            string msg_delta_log = StringFormat(
+                "Breakout does not break zone: delta %s | zone [%s - %s]",
+                DoubleToString(delta, _Digits),
+                DoubleToString(zone.get_top_price(), _Digits),
+                DoubleToString(zone.get_bottom_price(), _Digits));
+            log(msg_delta_log);
             return false;
+        }
 
         if (!has_valid_breakout_size(zone))
             return false;
@@ -315,9 +369,14 @@ class TrendFollow : public NewRateBased {
 
         string comment = (market_bias == TREND_BULLISH) ? "TRADE Buy" : "TRADE Sell";
 
-        Print("---- ", comment,
-              " | Entry: ", entry, " | SL: ", sl, " | TP: ", tp,
-              " | Lotsize: ", lot_size);
+        string msg_trade_log = StringFormat(
+            "%s | Entry: %s | SL: %s | TP: %s | Lots: %s",
+            comment,
+            DoubleToString(entry, _Digits),
+            DoubleToString(sl, _Digits),
+            DoubleToString(tp, _Digits),
+            DoubleToString(lot_size, _Digits));
+        log(msg_trade_log);
 
         if (market_bias == TREND_BULLISH)
             ctrade.Buy(lot_size, _Symbol, entry, sl, tp, comment);
@@ -429,7 +488,13 @@ class TrendFollow : public NewRateBased {
 
             double deal_profit = HistoryDealGetDouble(deal, DEAL_PROFIT);
 
-            Print("---- Deal ", i, " | Ticket: ", deal, " | Order: ", deal_order, " | Profit: ", deal_profit);
+            string msg_deal_log = StringFormat(
+                "Deal: %s | Ticket: | %s | Order: %s | Profit: %s",
+                IntegerToString(i),
+                IntegerToString(deal),
+                IntegerToString(deal_order),
+                DoubleToString(deal_profit, _Digits));
+            log(msg_deal_log);
 
             if (deal_profit < 0)
                 today_losses++;
@@ -438,7 +503,12 @@ class TrendFollow : public NewRateBased {
                 today_wins++;
         }
 
-        Print("---- Deals today: ", today_deals, " | Wins: ", today_wins, " | Losses: ", today_losses);
+        string msg_total_log = StringFormat(
+            "Deals today: %s | Wins: %s | Losses: %s",
+            IntegerToString(today_deals),
+            IntegerToString(today_wins),
+            IntegerToString(today_losses));
+        log(msg_total_log);
 
         if (args.daily_limit_losses > 0 && (today_losses >= args.daily_limit_losses))
             return true;
