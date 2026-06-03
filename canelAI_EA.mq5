@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Copyright 2026, MetaQuotes Ltd."
 #property link "https://www.mql5.com"
-#property version "2.1"
+#property version "2.2"
 
 #include <Trade\Trade.mqh>
 
@@ -34,6 +34,8 @@
 #include "include/strategy/trend_follow_HFT/TrendFollowHFT.mqh"
 #include "include/strategy/trend_recoil/TrendRecoil.mqh"
 
+#include "include/Advisor.mqh"
+
 //+------------------------------------------------------------------+
 //| Inputs                                                           |
 //+------------------------------------------------------------------+
@@ -41,6 +43,7 @@ input group "==== General ====";
 input StrategyType in_strategy = TREND_FOLLOW; // Strategy
 input MarketSessionEnum in_session = NEW_YORK; // Session
 input bool in_visual_mode = true;              // Visual
+input bool in_log_file = true;                 // Logs
 
 input group "==== Strategy: Trend Follow ====";
 input int tf_shift_minutes = 370;                // Shift Minutes
@@ -55,139 +58,20 @@ input int tf_daily_limit_wins = 1;               // Daily limit wins
 input double tf_monthly_limit_percentage = 0.0;  // Monthly limit %
 
 //+------------------------------------------------------------------+
-//| Instances                                                        |
+//| Advisor Arguments                                                |
 //+------------------------------------------------------------------+
 AdvisorArgs advisor_args;
-Strategy* advisor_strategy;
-bool advisor_trading_time;
 
-//+------------------------------------------------------------------+
-//| Expert deinitialization function                                 |
-//+------------------------------------------------------------------+
-void OnDeinit(const int reason) {
-    Print("Advisor Deinit");
-    delete_chart_objects();
-    delete_instances();
-}
+void set_advisor_args() {
 
-//+------------------------------------------------------------------+
-//| Expert initialization function                                   |
-//+------------------------------------------------------------------+
-int OnInit() {
-    Print("Advisor Init");
-    delete_chart_objects();
-    init_instances();
-    return (INIT_SUCCEEDED);
-}
-
-//+------------------------------------------------------------------+
-//| Expert tick function                                             |
-//+------------------------------------------------------------------+
-void OnTick() {
-    if (advisor_trading_time)
-        advisor_strategy.base_on_tick();
-}
-
-//+------------------------------------------------------------------+
-//| Expert timer function                                            |
-//+------------------------------------------------------------------+
-void OnTimer() {
-
-    bool new_value = is_trading_time();
-
-    if (advisor_trading_time != new_value) {
-        advisor_trading_time = new_value;
-
-        advisor_strategy.base_on_trading_time_change(advisor_trading_time);
-        update_status_board();
-    }
-
-    if (advisor_trading_time)
-        advisor_strategy.base_on_timer();
-}
-
-//+------------------------------------------------------------------+
-//| Expert trade transaction function                                |
-//+------------------------------------------------------------------+
-void OnTradeTransaction(const MqlTradeTransaction& trans,
-                        const MqlTradeRequest& request,
-                        const MqlTradeResult& result) {
-    advisor_strategy.base_on_trade_transaction(trans, request, result);
-}
-
-//+------------------------------------------------------------------+
-//| Functions                                                        |
-//+------------------------------------------------------------------+
-void delete_chart_objects() {
-    if (in_visual_mode) {
-        StatusBoard::delete_status_board();
-        ObjectsDeleteAll(0);
-    }
-}
-
-void update_status_board() {
-    if (in_visual_mode)
-        StatusBoard::update(advisor_args);
-}
-
-void delete_instances() {
-    delete_strategy_instance();
-    delete_timer();
-}
-
-void delete_strategy_instance() {
-    if (CheckPointer(advisor_strategy) == POINTER_DYNAMIC) {
-        delete advisor_strategy;
-        advisor_strategy = NULL;
-    }
-}
-
-void delete_timer() {
-    EventKillTimer();
-}
-
-void set_timer() {
-    EventSetMillisecondTimer(ADVISOR_TIMER_INTERVAL_MILLISECONDS);
-}
-
-bool is_trading_time() {
-    return MarketSession::is_trading_time(advisor_args.session);
-}
-
-void init_instances() {
+    // General
     advisor_args.strategy = in_strategy;
     advisor_args.session = in_session;
     advisor_args.visual_mode = in_visual_mode;
-    advisor_trading_time = is_trading_time();
+    advisor_args.log_file = in_log_file;
 
-    set_strategy_instance();
-    update_status_board();
-    set_timer();
-}
-
-void set_strategy_instance() {
-
-    delete_strategy_instance();
-
-    switch (advisor_args.strategy) {
-
-    case TREND_FOLLOW:
+    if (advisor_args.strategy == TREND_FOLLOW)
         set_trend_follow_args();
-        advisor_strategy = new TrendFollow(advisor_args);
-        break;
-
-    case TREND_FOLLOW_HFT:
-        advisor_strategy = new TrendFollowHFT(advisor_args);
-        break;
-
-    case TREND_RECOIL:
-        set_trend_recoil_args();
-        advisor_strategy = new TrendRecoil(advisor_args);
-        break;
-
-    default:
-        advisor_strategy = new Strategy();
-    }
 }
 
 void set_trend_follow_args() {
@@ -203,6 +87,53 @@ void set_trend_follow_args() {
     advisor_args.trend_follow.monthly_limit_percentage = tf_monthly_limit_percentage;
 }
 
-void set_trend_recoil_args() {
-    // TODO
+//+------------------------------------------------------------------+
+//| Functions                                                        |
+//+------------------------------------------------------------------+
+
+void delete_chart_objects() {
+    ObjectsDeleteAll(0);
+}
+
+void delete_timer() {
+    EventKillTimer();
+}
+
+void set_timer() {
+    EventSetMillisecondTimer(ADVISOR_TIMER_INTERVAL_MILLISECONDS);
+}
+
+//+------------------------------------------------------------------+
+//| Event Handling                                                   |
+//+------------------------------------------------------------------+
+
+int OnInit() {
+    Print("OnInit");
+    delete_chart_objects();
+    set_advisor_args();
+    Advisor::on_init(advisor_args);
+    set_timer();
+    return INIT_SUCCEEDED;
+}
+
+void OnDeinit(const int reason) {
+    Print("OnDeinit");
+    delete_timer();
+    Advisor::on_deinit();
+    delete_chart_objects();
+}
+
+void OnTick() {
+    Advisor::on_tick();
+}
+
+void OnTimer() {
+    Advisor::on_timer();
+}
+
+void OnTradeTransaction(
+    const MqlTradeTransaction& trans,
+    const MqlTradeRequest& request,
+    const MqlTradeResult& result) {
+    Advisor::on_trade_transaction(trans, request, result);
 }

@@ -1,3 +1,5 @@
+#include "../../include/dto/AdvisorStatus.mqh"
+
 // Constants
 const string BOARD_ITEM_STRATEGY_NAME = "status_board_item_strategy";
 const string BOARD_ITEM_STRATEGY_VALUE = "Strategy: ";
@@ -96,21 +98,18 @@ class StatusBoard {
         ChartUtils::delete_chart_object(BOARD_NAME);
     }
 
-    static void update(AdvisorArgs& data) {
+    static void update(AdvisorStatus& status) {
         delete_labels();
 
-        if (!data.visual_mode)
+        if (!status.visual_mode)
             return;
 
-        string strategy_name = EnumToString(data.strategy);
-        string strategy_text = BOARD_ITEM_STRATEGY_VALUE + strategy_name;
-        create_label(BOARD_ITEM_STRATEGY_NAME, strategy_text);
+        create_label(BOARD_ITEM_STRATEGY_NAME, status.strategy_name);
 
-        bool trading_time = MarketSession::is_trading_time(data.session);
-        string active_text = BOARD_ITEM_ACTIVE_VALUE + (trading_time ? "ON" : "OFF");
+        string active_text = EnumToString(status.reason);
         create_label(BOARD_ITEM_ACTIVE_NAME, active_text);
 
-        set_board_color(trading_time ? clrGreen : clrRed);
+        set_board_color(status.active ? clrGreen : clrRed);
     }
 };
 
