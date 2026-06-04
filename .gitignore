@@ -40,3 +40,12 @@
 
 # debug information files
 *.dwo
+
+# Custom
+*.auto.mqh
+*.clang-format
+*.ipynb_checkpoints
+.clangd
+.vscode/settings.json
+compile_commands.json
+include/strategy/mean_reversion/analysis_notebook/csv_files/*.csv

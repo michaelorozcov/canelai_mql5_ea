@@ -1,3 +1,5 @@
+#include "MarketSession.mqh"
+
 class MarketOrder {
   public:
     static void get_open_positions(ulong& tickets[], ulong magic_number) {
@@ -59,5 +61,62 @@ class MarketOrder {
         }
 
         return profit;
+    }
+
+    static double get_take_profit_price(
+        ENUM_ORDER_TYPE order_type, double stop_loss, double entry_price, double risk_reward_ratio) {
+
+        if (entry_price == 0.0 || stop_loss == 0.0 || risk_reward_ratio == 0.0)
+            return 0.0;
+
+        double distance = MathAbs(entry_price - stop_loss);
+        double tp_distance = (distance * risk_reward_ratio);
+
+        double tp = 0.0;
+
+        if (order_type == ORDER_TYPE_BUY)
+            tp = entry_price + tp_distance;
+
+        else if (order_type == ORDER_TYPE_SELL)
+            tp = entry_price - tp_distance;
+
+        return NormalizeDouble(tp, _Digits);
+    }
+
+    static double get_today_profit() {
+
+        double profit = 0;
+        datetime start_time = MarketSession::get_today_init_time();
+        datetime end_time = MarketSession::get_today_end_time();
+
+        HistorySelect(start_time, end_time);
+
+        int deals = HistoryDealsTotal();
+
+        for (int i = 0; i < deals; i++) {
+
+            ulong deal = HistoryDealGetTicket(i);
+            HistoryDealSelect(deal);
+
+            ulong order = HistoryDealGetInteger(deal, DEAL_ORDER);
+
+            if (order == 0)
+                continue;
+
+            profit += HistoryDealGetDouble(deal, DEAL_PROFIT);
+        }
+
+        return profit;
+    }
+
+    static ulong get_last_ticket() {
+        ulong ticket = 0;
+        int positions = PositionsTotal();
+
+        if (positions > 0) {
+            ticket = PositionGetTicket(positions - 1);
+        }
+
+        return ticket;
     }
 };

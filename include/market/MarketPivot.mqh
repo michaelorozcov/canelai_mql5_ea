@@ -100,11 +100,20 @@ class MarketPivot {
                     break;
 
                 if (j == strength) {
-                    PivotPoint pivot = PivotPoint(i, type, PIVOT_ORDER_1);
+                    PivotPoint pivot;
+                    get_pivot_point_from_index(pivot, i, type, PIVOT_ORDER_1);
                     ArrayUtils::add_item(dest, pivot);
                 }
             }
         }
+    }
+
+    static void get_pivot_point_from_index(PivotPoint& dest, int rate_index, PivotType type, PivotOrder order) {
+        double price = type == PIVOT_TYPE_HIGH
+                           ? RatesUtils::get_rate_highest_price(rate_index, true)
+                           : RatesUtils::get_rate_lowest_price(rate_index, true);
+        datetime time = RatesUtils::get_rate_time(rate_index);
+        dest = PivotPoint(rate_index, price, time, type, order);
     }
 
   public:
@@ -117,11 +126,15 @@ class MarketPivot {
         ArrayUtils::clear(lows_order_1);
     }
 
-    static void set_pivot_points(int lowest_rate_index, bool visual_mode) {
+    static void set_pivot_points(
+        int lowest_rate_index, bool visual_mode, int strength = -1) {
+
         delete_pivot_points();
 
+        if (strength == -1)
+            strength = FIRST_ORDER_PIVOT_STRENGTH;
+
         // Order 1
-        int strength = FIRST_ORDER_PIVOT_STRENGTH;
         int start = RatesUtils::get_highest_rate_index() - strength;
         int end = lowest_rate_index + strength;
 
@@ -311,6 +324,29 @@ class MarketPivot {
             return RatesUtils::get_rate_highest_price(pivot.rate_index, wick);
         else
             return RatesUtils::get_rate_lowest_price(pivot.rate_index, wick);
+    }
+
+    static void get_last_pivot(
+        PivotPoint& dest, PivotOrder order) {
+
+        dest.clear();
+
+        PivotPoint highs[], lows[];
+        get_pivot_points(highs, PIVOT_TYPE_HIGH, order);
+        get_pivot_points(lows, PIVOT_TYPE_LOW, order);
+
+        PivotPoint last_high, last_low;
+        ArrayUtils::get_last_item(last_high, highs);
+        ArrayUtils::get_last_item(last_low, lows);
+
+        int last_high_index = last_high.rate_index;
+        int last_low_index = last_low.rate_index;
+
+        if (last_high_index <= last_low_index)
+            dest = last_high;
+
+        if (last_low_index <= last_high_index)
+            dest = last_low;
     }
 };
 

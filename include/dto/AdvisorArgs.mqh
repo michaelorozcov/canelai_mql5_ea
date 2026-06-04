@@ -3,6 +3,9 @@
 #include "../utils/Constants.mqh"
 
 #include "../strategy/Strategy.mqh"
+
+#include "../strategy/mean_reversion/MeanReversionArgs.mqh"
+
 #include "../strategy/trend_follow/TrendFollowArgs.mqh"
 #include "../strategy/trend_follow_HFT/TrendFollowHFTArgs.mqh"
 #include "../strategy/trend_recoil/TrendRecoilArgs.mqh"
@@ -13,6 +16,8 @@ struct AdvisorArgs {
     ENUM_MARKET_SESSION session;
     bool visual_mode;
     bool log_file;
+
+    MeanReversionArgs mean_reversion;
 
     TrendFollowArgs trend_follow;
     TrendFollowHFTArgs trend_follow_hft;

@@ -2,6 +2,9 @@
 
 #include "../include/utils/LogUtils.mqh"
 
+#include "../include/strategy/mean_reversion/MeanReversion.mqh"
+#include "../include/strategy/mean_reversion/analysis_notebook/MeanReversionAnalysis.mqh"
+
 #include "../include/strategy/trend_follow/TrendFollow.mqh"
 
 class Advisor {
@@ -81,6 +84,11 @@ class Advisor {
 
         if (args.strategy == TREND_FOLLOW)
             strategy = new TrendFollow(args);
+
+        // TODO
+        if (args.strategy == MEAN_REVERSION)
+            strategy = new MeanReversion(args);
+        //    strategy = new MeanReversionAnalysis(args);
 
         if (has_strategy_instance())
             strategy.set_advisor_id(status.advisor_id);
