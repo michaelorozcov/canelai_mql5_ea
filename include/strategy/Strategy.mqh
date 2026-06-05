@@ -83,7 +83,7 @@ class NewRateBased : public Strategy {
     }
 
     datetime get_last_rate_time() {
-        return iTime(_Symbol, _Period, 1);
+        return iTime(_Symbol, _Period, 0);
     }
 
     bool is_new_rate() {
