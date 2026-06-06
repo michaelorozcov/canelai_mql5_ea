@@ -1,4 +1,4 @@
-enum MarketSessionEnum {
+enum ENUM_MARKET_SESSION {
     LONDON,
     NEW_YORK,
     TOKYO,
@@ -6,7 +6,7 @@ enum MarketSessionEnum {
 };
 
 struct MarketSessionTime {
-    MarketSessionEnum session;
+    ENUM_MARKET_SESSION session;
     string start;
     string end;
 };

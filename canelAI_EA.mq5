@@ -40,10 +40,10 @@
 //| Inputs                                                           |
 //+------------------------------------------------------------------+
 input group "==== General ====";
-input StrategyType in_strategy = TREND_FOLLOW; // Strategy
-input MarketSessionEnum in_session = NEW_YORK; // Session
-input bool in_visual_mode = true;              // Visual
-input bool in_log_file = true;                 // Logs
+input StrategyType in_strategy = TREND_FOLLOW;   // Strategy
+input ENUM_MARKET_SESSION in_session = NEW_YORK; // Session
+input bool in_visual_mode = true;                // Visual
+input bool in_log_file = true;                   // Logs
 
 input group "==== Strategy: Trend Follow ====";
 input int tf_shift_minutes = 370;                // Shift Minutes
