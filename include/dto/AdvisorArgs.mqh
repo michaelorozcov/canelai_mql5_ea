@@ -10,7 +10,7 @@
 struct AdvisorArgs {
 
     StrategyType strategy;
-    MarketSessionEnum session;
+    ENUM_MARKET_SESSION session;
     bool visual_mode;
     bool log_file;
 
@@ -20,7 +20,7 @@ struct AdvisorArgs {
 
     AdvisorArgs() {
         strategy = StrategyType::TREND_FOLLOW;
-        session = MarketSessionEnum::NEW_YORK;
+        session = ENUM_MARKET_SESSION::NEW_YORK;
         visual_mode = true;
         log_file = true;
     }

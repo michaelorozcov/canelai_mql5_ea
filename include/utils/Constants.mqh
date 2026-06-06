@@ -3,6 +3,7 @@
 
 // Timer
 const int ADVISOR_TIMER_INTERVAL_MILLISECONDS = 1000;
+const int MINUTES_BEFORE_SESSION_CLOSE = 10;
 
 // Logs
 const string LOGS_RELATIVE_PATH = "canelai\\logs\\";
@@ -10,7 +11,7 @@ const string LOGS_FILENAME_TEMPLATE = LOGS_RELATIVE_PATH + "%s_%s.txt";
 const string LOGS_ENTRY_TEMPLATE = "%s - %s";
 
 // Analysis
-const MarketSessionEnum ANALYSIS_SESSION = MarketSessionEnum::NEW_YORK;
+const ENUM_MARKET_SESSION ANALYSIS_SESSION = ENUM_MARKET_SESSION::NEW_YORK;
 const int ANALYSIS_SHIFT_MINUTES = 370;
 const int ANALYSIS_LOWEST_INDEX = 2;
 
