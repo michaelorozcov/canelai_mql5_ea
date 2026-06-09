@@ -319,8 +319,6 @@ class TrendFollow : public NewRateBased {
 
         int rate_index = args.breakout_rate_index;
 
-        // TODO disabled
-        /*
         datetime breakout_time = RatesUtils::get_rate_time(rate_index);
         datetime current_time = TimeGMT();
         int diff_minutes = (int)((current_time - breakout_time) / 60);
@@ -334,7 +332,6 @@ class TrendFollow : public NewRateBased {
             log(msg_index_log);
             return false;
         }
-        */
 
         double delta = args.breakout_delta_check ? zone.treshold : 0.0;
         bool broken_zone = MarketZone::is_broken_by_rate(zone, rate_index, delta);
