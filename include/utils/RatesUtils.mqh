@@ -36,6 +36,9 @@ class RatesUtils {
 
     static void set_rates(int shift_minutes, int lowest_rate_index, bool visual_mode) {
 
+        // TODO: Timeout for Rates data be mounted on platform before copy them
+        Sleep(500);
+
         ArrayUtils::clear(rates);
         ArraySetAsSeries(rates, true);
 

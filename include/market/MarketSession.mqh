@@ -22,9 +22,14 @@ class MarketSession {
         dest.sec = 0;
     }
 
+    static void subtract_minutes(datetime& date, int minutes) {
+        int seconds_to_subtract = MathAbs(minutes * 60);
+        date -= seconds_to_subtract;
+    }
+
   public:
     // TODO: Include server validation SymbolInfoSessionTrade
-    static bool is_trading_time(MarketSessionEnum session) {
+    static bool is_trading_time(ENUM_MARKET_SESSION session) {
 
         datetime current_date = TimeGMT(); // UTC
         MqlDateTime struct_date;
@@ -39,6 +44,8 @@ class MarketSession {
 
         datetime start_date = StructToTime(struct_start);
         datetime end_date = StructToTime(struct_end);
+
+        subtract_minutes(end_date, MINUTES_BEFORE_SESSION_CLOSE);
 
         return (current_date >= start_date) && (current_date < end_date);
     }
