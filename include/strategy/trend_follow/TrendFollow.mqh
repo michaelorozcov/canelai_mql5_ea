@@ -474,25 +474,20 @@ class TrendFollow : public NewRateBased {
 
         for (int i = 0; i <= today_deals; i++) {
 
-            ulong deal = HistoryDealGetTicket(i);
-            if (deal == 0)
+            ulong deal_ticket = HistoryDealGetTicket(i);
+            if (deal_ticket == 0)
                 continue;
 
-            ulong deal_order = HistoryDealGetInteger(deal, DEAL_ORDER);
-            if (deal_order == 0)
+            ENUM_DEAL_TYPE deal_type = (ENUM_DEAL_TYPE)HistoryDealGetInteger(deal_ticket, DEAL_TYPE);
+            if ((deal_type != DEAL_TYPE_BUY) && (deal_type != DEAL_TYPE_SELL))
                 continue;
 
-            int order_type = (int)HistoryOrderGetInteger(deal_order, ORDER_TYPE);
-            if ((order_type != ORDER_TYPE_BUY) && (order_type != ORDER_TYPE_SELL))
-                continue;
-
-            double deal_profit = HistoryDealGetDouble(deal, DEAL_PROFIT);
+            double deal_profit = HistoryDealGetDouble(deal_ticket, DEAL_PROFIT);
 
             string msg_deal_log = StringFormat(
-                "Deal: %s | Ticket: | %s | Order: %s | Profit: %s",
+                "Deal: %s | Ticket: %s | Profit: %s",
                 IntegerToString(i),
-                IntegerToString(deal),
-                IntegerToString(deal_order),
+                IntegerToString(deal_ticket),
                 DoubleToString(deal_profit, _Digits));
             log(msg_deal_log);
 
