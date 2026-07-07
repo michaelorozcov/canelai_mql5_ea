@@ -1,6 +1,8 @@
 #include "PivotPoint.mqh"
 #include "Trend.mqh"
 
+#include "../../include/market/MarketPivot.mqh"
+
 struct BlockBreakout {
     TrendType bias;
     PivotPoint pivot;
@@ -54,6 +56,16 @@ struct StructureBlock {
 
         else
             return TREND_RANGING;
+    }
+
+    double get_top_price() {
+        PivotPoint top_ref = this.is_bullish() ? this.end : this.start;
+        return MarketPivot::get_pivot_price(top_ref, true);
+    }
+
+    double get_bottom_price() {
+        PivotPoint bottom_ref = this.is_bullish() ? this.start : this.end;
+        return MarketPivot::get_pivot_price(bottom_ref, true);
     }
 
     bool is_bullish() {

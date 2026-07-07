@@ -242,6 +242,12 @@ class MarketStructure {
         ArrayCopy(dest, structure_blocks_impulses, 0, start, amount);
     }
 
+    static void get_latest_block(StructureBlock& dest) {
+        StructureBlock blocks[];
+        get_latest_blocks(blocks, 1);
+        ArrayUtils::get_last_item(dest, blocks);
+    }
+
     static double get_block_strength(StructureBlock& block) {
         if (!block.is_valid())
             return 0.0;

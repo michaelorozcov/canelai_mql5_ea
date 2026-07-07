@@ -29,7 +29,12 @@
 #include "include/market/MarketTrend.mqh"
 #include "include/market/MarketZone.mqh"
 
+#include "include/indicators/BollingerBands.mqh"
+#include "include/indicators/RSI.mqh"
+
 #include "include/strategy/Strategy.mqh"
+
+#include "include/strategy/block_reversion/BlockReversion.mqh"
 #include "include/strategy/trend_follow/TrendFollow.mqh"
 #include "include/strategy/trend_follow_HFT/TrendFollowHFT.mqh"
 #include "include/strategy/trend_recoil/TrendRecoil.mqh"
@@ -57,6 +62,17 @@ input int tf_daily_limit_losses = 1;             // Daily limit losses
 input int tf_daily_limit_wins = 1;               // Daily limit wins
 input double tf_monthly_limit_percentage = 0.0;  // Monthly limit %
 
+input group "==== Strategy: Block Reversion ====";
+input int br_pivot_point_strength = 3;                          // Pivot Strength
+input double br_entry_level_max = 25;                           // Max entry level
+input ENUM_BOLLINGER_PERIOD br_bollinger_period = BB_PERIOD_20; // Bollinger period
+input ENUM_RSI_PERIOD br_rsi_period = RSI_PERIOD_14;            // RSI period
+input double br_risk_percentage = 0.5;                          // Risk %
+input double br_risk_reward_ratio = 1.0;                        // R:R
+input double br_fixed_volume = 0;                               // Fixed volume
+input double br_limit_daily_pct_won = 1.0;                      // Daily limit win %
+input double br_limit_daily_pct_lost = 0;                       // Daily limit lost %
+
 //+------------------------------------------------------------------+
 //| Advisor Arguments                                                |
 //+------------------------------------------------------------------+
@@ -70,8 +86,23 @@ void set_advisor_args() {
     advisor_args.visual_mode = in_visual_mode;
     advisor_args.log_file = in_log_file;
 
+    if (advisor_args.strategy == BLOCK_REVERSION)
+        set_block_reversion_args();
+
     if (advisor_args.strategy == TREND_FOLLOW)
         set_trend_follow_args();
+}
+
+void set_block_reversion_args() {
+    advisor_args.block_reversion.pivot_point_strength = br_pivot_point_strength;
+    advisor_args.block_reversion.entry_level_max = br_entry_level_max;
+    advisor_args.block_reversion.bollinger_period = br_bollinger_period;
+    advisor_args.block_reversion.rsi_period = br_rsi_period;
+    advisor_args.block_reversion.risk_percentage = br_risk_percentage;
+    advisor_args.block_reversion.risk_reward_ratio = br_risk_reward_ratio;
+    advisor_args.block_reversion.fixed_volume = br_fixed_volume;
+    advisor_args.block_reversion.limit_daily_pct_won = br_limit_daily_pct_won;
+    advisor_args.block_reversion.limit_daily_pct_lost = br_limit_daily_pct_lost;
 }
 
 void set_trend_follow_args() {

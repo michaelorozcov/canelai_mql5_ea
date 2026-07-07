@@ -1,9 +1,10 @@
 #include "../../include/dto/AdvisorArgs.mqh"
 
+#include "../../include/market/MarketOrder.mqh"
+
 enum StrategyType {
+    BLOCK_REVERSION,
     TREND_FOLLOW,
-    TREND_FOLLOW_HFT,
-    TREND_RECOIL,
 };
 
 class Strategy {
@@ -25,6 +26,33 @@ class Strategy {
         this.advisor_id = param_advisor_id;
         this.magic_number = this.calculate_magic_number(this.advisor_id);
         this.ctrade.SetExpertMagicNumber(this.magic_number);
+    }
+
+    ulong trade(
+        ENUM_ORDER_TYPE order, double volume, double price,
+        double sl, double tp, string comment = "") {
+
+        ulong ticket = 0;
+        bool success = false;
+
+        if (order == ORDER_TYPE_BUY)
+            success = trade_buy(volume, price, sl, tp, comment);
+
+        if (order == ORDER_TYPE_SELL)
+            success = trade_sell(volume, price, sl, tp, comment);
+
+        if (success)
+            ticket = MarketOrder::get_last_ticket();
+
+        return ticket;
+    }
+
+    bool trade_buy(double volume, double price, double sl, double tp, string comment = "") {
+        return this.ctrade.Buy(volume, _Symbol, price, sl, tp, comment);
+    }
+
+    bool trade_sell(double volume, double price, double sl, double tp, string comment = "") {
+        return this.ctrade.Sell(volume, _Symbol, price, sl, tp, comment);
     }
 
     virtual void on_init() {

@@ -40,3 +40,10 @@
 
 # debug information files
 *.dwo
+
+# Custom
+compile_commands.json
+*.ipynb_checkpoints
+.clangd
+.mql-auto-forwards/*.mqh
+include/strategy/**/analysis_notebook/csv_files/*.csv

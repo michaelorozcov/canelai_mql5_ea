@@ -2,6 +2,7 @@
 
 #include "../include/utils/LogUtils.mqh"
 
+#include "../include/strategy/block_reversion/BlockReversion.mqh"
 #include "../include/strategy/trend_follow/TrendFollow.mqh"
 
 class Advisor {
@@ -46,7 +47,7 @@ class Advisor {
 
         args = params;
         init_advisor_status();
-        log(true, "INIT");
+        log(true, "Advisor init");
 
         set_strategy_instance();
         update_status_board();
@@ -79,6 +80,9 @@ class Advisor {
 
         delete_strategy_instance();
 
+        if (args.strategy == BLOCK_REVERSION)
+            strategy = new BlockReversion(args);
+
         if (args.strategy == TREND_FOLLOW)
             strategy = new TrendFollow(args);
 
@@ -92,7 +96,7 @@ class Advisor {
             delete_strategy_instance();
         }
 
-        log(true, "DEINIT");
+        log(true, "Advisor deinit");
     }
 
     static void process_tick() {
