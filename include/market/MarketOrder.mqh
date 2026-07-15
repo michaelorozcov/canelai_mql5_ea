@@ -1,6 +1,12 @@
+#include "./../../include/utils/ArrayUtils.mqh"
+
+#include "./../../include/market/MarketSession.mqh"
+
 class MarketOrder {
   public:
     static void get_open_positions(ulong& tickets[], ulong magic_number) {
+
+        ArrayUtils::clear(tickets);
 
         int total = PositionsTotal();
         if (total == 0)
@@ -25,14 +31,6 @@ class MarketOrder {
         get_open_positions(tickets, magic_number);
 
         return (ArraySize(tickets) > 0);
-    }
-
-    static void close_open_positions(CTrade& ctrade, ulong magic_number) {
-        ulong tickets[];
-        get_open_positions(tickets, magic_number);
-
-        for (int i = 0; i < ArraySize(tickets); i++)
-            ctrade.PositionClose(tickets[i]);
     }
 
     static double get_month_profit() {
@@ -85,5 +83,51 @@ class MarketOrder {
         double tp = (entry_price + (tp_distance * factor));
 
         return NormalizeDouble(tp, _Digits);
+    }
+
+    static void get_today_balance(
+        double& today_profit, double& today_won_trades, double& today_lost_trades) {
+
+        today_profit = 0.0;
+        today_won_trades = 0;
+        today_lost_trades = 0;
+
+        datetime start_time = MarketSession::get_today_init_time();
+        datetime end_time = MarketSession::get_today_end_time();
+
+        if (!HistorySelect(start_time, end_time))
+            return;
+
+        int today_deals = HistoryDealsTotal();
+
+        for (int i = 0; i < today_deals; i++) {
+
+            ulong deal_ticket = HistoryDealGetTicket(i);
+            if (deal_ticket == 0)
+                continue;
+
+            ENUM_DEAL_ENTRY deal_entry = (ENUM_DEAL_ENTRY)
+                HistoryDealGetInteger(deal_ticket, DEAL_ENTRY);
+            if (deal_entry != DEAL_ENTRY_OUT)
+                continue;
+
+            ENUM_DEAL_TYPE deal_type = (ENUM_DEAL_TYPE)
+                HistoryDealGetInteger(deal_ticket, DEAL_TYPE);
+            if ((deal_type != DEAL_TYPE_BUY) && (deal_type != DEAL_TYPE_SELL))
+                continue;
+
+            double deal_profit =
+                HistoryDealGetDouble(deal_ticket, DEAL_PROFIT) +
+                HistoryDealGetDouble(deal_ticket, DEAL_SWAP) +
+                HistoryDealGetDouble(deal_ticket, DEAL_COMMISSION);
+
+            today_profit += deal_profit;
+
+            if (deal_profit < 0)
+                today_lost_trades++;
+
+            if (deal_profit > 0)
+                today_won_trades++;
+        }
     }
 };

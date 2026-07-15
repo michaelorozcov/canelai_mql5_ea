@@ -1,5 +1,7 @@
-#include "PivotPoint.mqh"
-#include "Trend.mqh"
+#include "./../../include/dto/PivotPoint.mqh"
+#include "./../../include/dto/Trend.mqh"
+
+#include "./../../include/market/MarketPivot.mqh"
 
 struct BlockBreakout {
     TrendType bias;

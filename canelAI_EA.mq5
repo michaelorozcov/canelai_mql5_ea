@@ -7,32 +7,13 @@
 #property link "https://www.mql5.com"
 #property version "2.7"
 
-#include <Trade\Trade.mqh>
+#include "include/dto/args_input/AdvisorArgs.mqh"
+#include "include/dto/args_input/general/RiskManagement.mqh"
+#include "include/dto/args_input/strategy/StrategyType.mqh"
 
-#include "include/dto/AdvisorArgs.mqh"
-#include "include/dto/PivotPoint.mqh"
 #include "include/dto/Session.mqh"
-#include "include/dto/Structure.mqh"
-#include "include/dto/Trend.mqh"
-#include "include/dto/Zone.mqh"
 
-#include "include/utils/ArrayUtils.mqh"
-#include "include/utils/ChartUtils.mqh"
 #include "include/utils/Constants.mqh"
-#include "include/utils/RatesUtils.mqh"
-#include "include/utils/StatusBoard.mqh"
-
-#include "include/market/MarketOrder.mqh"
-#include "include/market/MarketPivot.mqh"
-#include "include/market/MarketSession.mqh"
-#include "include/market/MarketStructure.mqh"
-#include "include/market/MarketTrend.mqh"
-#include "include/market/MarketZone.mqh"
-
-#include "include/strategy/Strategy.mqh"
-#include "include/strategy/trend_follow/TrendFollow.mqh"
-#include "include/strategy/trend_follow_HFT/TrendFollowHFT.mqh"
-#include "include/strategy/trend_recoil/TrendRecoil.mqh"
 
 #include "include/Advisor.mqh"
 
@@ -45,17 +26,22 @@ input ENUM_MARKET_SESSION in_session = NEW_YORK; // Session
 input bool in_visual_mode = true;                // Visual
 input bool in_log_file = true;                   // Logs
 
+input group "==== Risk Management ====";
+input ENUM_TRADE_RISK_TYPE in_trade_risk_type = TRADE_RISK_PCT;            // Trade risk type
+input double in_trade_risk_value = 1.0;                                    // Trade risk value
+input double in_reward_ratio = 3.0;                                        // Reward ratio (R:R)
+input double in_breakeven = 0.0;                                           // Breakeven
+input double in_trailing_stop = 0.0;                                       // Trailing stop (R)
+input ENUM_DAILY_LIMIT_TYPE in_daily_limit_won_type = DAILY_LIMIT_TRADES;  // Won daily limit type
+input double in_daily_limit_won_value = 1.0;                               // Won daily limit value
+input ENUM_DAILY_LIMIT_TYPE in_daily_limit_lost_type = DAILY_LIMIT_TRADES; // Lost daily limit type
+input double in_daily_limit_lost_value = 1.0;                              // Lost daily limit value
+
 input group "==== Strategy: Trend Follow ====";
-input int tf_shift_minutes = 370;                // Shift Minutes
+input int tf_shift_minutes = 720;                // Shift Minutes
 input int tf_structure_blocks_distance_max = 60; // Blocks distance max (in minutes)
 input bool tf_breakout_delta_check = false;      // Delta check (above zone)
 input bool tf_breakout_volume_check = false;     // Volume check (tick volume)
-input double tf_risk_percentage = 1.0;           // Risk %
-input double tf_risk_reward_ratio = 3.0;         // R:R
-input double tf_breakeven_value = 0;             // BE
-input int tf_daily_limit_losses = 1;             // Daily limit losses
-input int tf_daily_limit_wins = 1;               // Daily limit wins
-input double tf_monthly_limit_percentage = 0.0;  // Monthly limit %
 
 //+------------------------------------------------------------------+
 //| Advisor Arguments                                                |
@@ -64,14 +50,39 @@ AdvisorArgs advisor_args;
 
 void set_advisor_args() {
 
-    // General
-    advisor_args.strategy = in_strategy;
-    advisor_args.session = in_session;
-    advisor_args.visual_mode = in_visual_mode;
-    advisor_args.log_file = in_log_file;
+    set_general_args();
+    set_risk_management_args();
 
-    if (advisor_args.strategy == TREND_FOLLOW)
+    switch (advisor_args.general.strategy) {
+    case TREND_FOLLOW:
         set_trend_follow_args();
+        break;
+    default:
+        break;
+    }
+}
+
+void set_general_args() {
+    advisor_args.general.strategy = in_strategy;
+    advisor_args.general.session = in_session;
+    advisor_args.general.visual_mode = in_visual_mode;
+    advisor_args.general.log_file = in_log_file;
+}
+
+void set_risk_management_args() {
+
+    advisor_args.risk.trade_risk.type = in_trade_risk_type;
+    advisor_args.risk.trade_risk.value = in_trade_risk_value;
+
+    advisor_args.risk.reward_ratio = in_reward_ratio;
+    advisor_args.risk.breakeven = in_breakeven;
+    advisor_args.risk.trailing_stop = in_trailing_stop;
+
+    advisor_args.risk.daily_limit_won.type = in_daily_limit_won_type;
+    advisor_args.risk.daily_limit_won.value = in_daily_limit_won_value;
+
+    advisor_args.risk.daily_limit_lost.type = in_daily_limit_lost_type;
+    advisor_args.risk.daily_limit_lost.value = in_daily_limit_lost_value;
 }
 
 void set_trend_follow_args() {
@@ -79,12 +90,6 @@ void set_trend_follow_args() {
     advisor_args.trend_follow.structure_blocks_distance_max = tf_structure_blocks_distance_max;
     advisor_args.trend_follow.breakout_delta_check = tf_breakout_delta_check;
     advisor_args.trend_follow.breakout_volume_check = tf_breakout_volume_check;
-    advisor_args.trend_follow.risk_percentage = tf_risk_percentage;
-    advisor_args.trend_follow.risk_reward_ratio = tf_risk_reward_ratio;
-    advisor_args.trend_follow.breakeven_value = tf_breakeven_value;
-    advisor_args.trend_follow.daily_limit_losses = tf_daily_limit_losses;
-    advisor_args.trend_follow.daily_limit_wins = tf_daily_limit_wins;
-    advisor_args.trend_follow.monthly_limit_percentage = tf_monthly_limit_percentage;
 }
 
 //+------------------------------------------------------------------+
@@ -108,7 +113,7 @@ void set_timer() {
 //+------------------------------------------------------------------+
 
 int OnInit() {
-    Print("OnInit");
+    Print("canelAI_EA: OnInit");
     delete_chart_objects();
     set_advisor_args();
     Advisor::on_init(advisor_args);
@@ -117,7 +122,7 @@ int OnInit() {
 }
 
 void OnDeinit(const int reason) {
-    Print("OnDeinit");
+    Print("canelAI_EA: OnDeinit");
     delete_timer();
     Advisor::on_deinit();
     delete_chart_objects();
