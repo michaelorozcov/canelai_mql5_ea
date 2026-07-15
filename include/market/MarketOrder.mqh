@@ -60,4 +60,30 @@ class MarketOrder {
 
         return profit;
     }
+
+    static ulong get_last_ticket() {
+        ulong ticket = 0;
+        int positions = PositionsTotal();
+
+        if (positions > 0) {
+            ticket = PositionGetTicket(positions - 1);
+        }
+
+        return ticket;
+    }
+
+    static double calculate_take_profit_price(
+        ENUM_ORDER_TYPE order_type, double entry_price,
+        double stop_loss, double risk_reward_ratio) {
+
+        if (entry_price == 0.0 || stop_loss == 0.0 || risk_reward_ratio == 0.0)
+            return 0.0;
+
+        double distance = MathAbs(entry_price - stop_loss);
+        double tp_distance = (distance * risk_reward_ratio);
+        double factor = (order_type == ORDER_TYPE_BUY) ? 1 : -1;
+        double tp = (entry_price + (tp_distance * factor));
+
+        return NormalizeDouble(tp, _Digits);
+    }
 };

@@ -1,5 +1,7 @@
 #include "../../include/dto/AdvisorArgs.mqh"
 
+#include "../../include/market/MarketOrder.mqh"
+
 enum StrategyType {
     TREND_FOLLOW,
     TREND_FOLLOW_HFT,
@@ -25,6 +27,41 @@ class Strategy {
         this.advisor_id = param_advisor_id;
         this.magic_number = this.calculate_magic_number(this.advisor_id);
         this.ctrade.SetExpertMagicNumber(this.magic_number);
+    }
+
+    ulong market_order(
+        ENUM_ORDER_TYPE order, double volume, string symbol,
+        double price = 0.0, double sl = 0.0, double tp = 0.0, string comment = "") {
+
+        ulong ticket = 0;
+        bool success = false;
+
+        if (order == ORDER_TYPE_BUY)
+            success = market_order_buy(volume, symbol, price, sl, tp, comment);
+
+        if (order == ORDER_TYPE_SELL)
+            success = market_order_sell(volume, symbol, price, sl, tp, comment);
+
+        if (success)
+            ticket = MarketOrder::get_last_ticket();
+
+        return ticket;
+    }
+
+    bool market_order_buy(
+        double volume, string symbol,
+        double price = 0.0, double sl = 0.0, double tp = 0.0, string comment = "") {
+        return this.ctrade.Buy(volume, symbol, price, sl, tp, comment);
+    }
+
+    bool market_order_sell(
+        double volume, string symbol,
+        double price = 0.0, double sl = 0.0, double tp = 0.0, string comment = "") {
+        return this.ctrade.Sell(volume, symbol, price, sl, tp, comment);
+    }
+
+    bool set_position(ulong ticket, double sl, double tp) {
+        return this.ctrade.PositionModify(ticket, sl, tp);
     }
 
     virtual void on_init() {
@@ -76,22 +113,31 @@ class Strategy {
 
 class NewRateBased : public Strategy {
   public:
-    datetime last_rate_time;
+    MqlDateTime last_rate_time;
 
     NewRateBased() {
-        last_rate_time = get_last_rate_time();
+        get_last_rate_time(this.last_rate_time);
     }
 
-    datetime get_last_rate_time() {
-        return iTime(_Symbol, _Period, 0);
+    void get_last_rate_time(MqlDateTime& dest) {
+        datetime time = iTime(_Symbol, _Period, 1);
+        TimeToStruct(time, dest);
     }
 
     bool is_new_rate() {
-        datetime new_value = get_last_rate_time();
-        if (last_rate_time != new_value) {
-            last_rate_time = new_value;
+
+        MqlDateTime new_value;
+        get_last_rate_time(new_value);
+
+        bool diff_day = this.last_rate_time.day_of_year != new_value.day_of_year;
+        bool diff_hour = this.last_rate_time.hour != new_value.hour;
+        bool diff_min = this.last_rate_time.min != new_value.min;
+
+        if (diff_day || diff_hour || diff_min) {
+            this.last_rate_time = new_value;
             return true;
         }
+
         return false;
     }
 
