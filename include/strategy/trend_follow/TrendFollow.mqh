@@ -378,11 +378,30 @@ class TrendFollow : public NewRateBased {
             DoubleToString(lot_size, _Digits));
         log(msg_trade_log);
 
+        ENUM_ORDER_TYPE order =
+            (market_bias == TREND_BULLISH)
+                ? ORDER_TYPE_BUY
+                : ORDER_TYPE_SELL;
+
+        ulong ticket = market_order(order, lot_size, _Symbol, entry, sl, 0.0, comment);
+
+        if (ticket == 0) {
+            log("Error placing order");
+            return;
+        }
+
+        if (!update_tp(order, ticket)) {
+            log("Error updating trade TP: " + IntegerToString(ticket));
+            return;
+        }
+
+        /*
         if (market_bias == TREND_BULLISH)
             ctrade.Buy(lot_size, _Symbol, entry, sl, tp, comment);
 
         else if (market_bias == TREND_BEARISH)
             ctrade.Sell(lot_size, _Symbol, entry, sl, tp, comment);
+        */
     }
 
     double get_entry_price(TrendType market_bias) {
@@ -456,6 +475,21 @@ class TrendFollow : public NewRateBased {
             volume_min, MathMin(volume_max, lot_size));
 
         return NormalizeDouble(lot_size, 2);
+    }
+
+    bool update_tp(ENUM_ORDER_TYPE order_type, ulong ticket) {
+
+        if (!PositionSelectByTicket(ticket))
+            return false;
+
+        double entry_price = PositionGetDouble(POSITION_PRICE_OPEN);
+        double stop_loss = PositionGetDouble(POSITION_SL);
+        double risk_reward_ratio = this.args.risk_reward_ratio;
+
+        double tp = MarketOrder::calculate_take_profit_price(
+            order_type, entry_price, stop_loss, risk_reward_ratio);
+
+        return set_position(ticket, stop_loss, tp);
     }
 
     bool has_reached_daily_limit() {
