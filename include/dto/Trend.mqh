@@ -1,4 +1,4 @@
-#include "PivotPoint.mqh"
+#include "./../../include/dto/PivotPoint.mqh"
 
 enum TrendType {
     TREND_RANGING,

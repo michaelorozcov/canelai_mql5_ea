@@ -1,5 +1,5 @@
-#include "../dto/PivotPoint.mqh"
-#include "../dto/Trend.mqh"
+#include "./../../include/dto/Session.mqh"
+#include "./../../include/dto/Trend.mqh"
 
 // Timer
 const int ADVISOR_TIMER_INTERVAL_MILLISECONDS = 1000;
@@ -44,3 +44,7 @@ const double ZONE_SENSITIVITY = 0.3;
 const color ZONE_COLOR = clrBlue;
 const ENUM_LINE_STYLE ZONE_STYLE = STYLE_DASH;
 const int ZONE_HINTS_MIN = 3;
+
+// Volume
+const int VOLUME_DIGITS = 2;
+const double VOLUME_EPSILON = 1e-10;

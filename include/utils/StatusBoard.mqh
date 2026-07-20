@@ -1,4 +1,7 @@
-#include "../../include/dto/AdvisorStatus.mqh"
+#include "./../../include/dto/AdvisorStatus.mqh"
+
+#include "./../../include/utils/ArrayUtils.mqh"
+#include "./../../include/utils/ChartUtils.mqh"
 
 // Constants
 const string BOARD_ITEM_STRATEGY_NAME = "status_board_item_strategy";
