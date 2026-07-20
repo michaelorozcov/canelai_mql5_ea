@@ -1,67 +1,18 @@
-#include "../../include/dto/AdvisorArgs.mqh"
+#include "./../../../../../Include/Trade/Trade.mqh"
 
-#include "../../include/market/MarketOrder.mqh"
+#include "./../../include/dto/args_input/AdvisorArgs.mqh"
 
-enum StrategyType {
-    TREND_FOLLOW,
-    TREND_FOLLOW_HFT,
-    TREND_RECOIL,
-};
+#include "./../../include/utils/LogUtils.mqh"
+
+#include "./../../include/market/MarketOrder.mqh"
 
 class Strategy {
 
-  private:
-    ulong calculate_magic_number(string hash_base) {
-        ulong hash = 0;
-        for (int i = 0; i < StringLen(hash_base); i++)
-            hash += (ulong)StringGetCharacter(hash_base, i);
-        return hash;
-    }
-
   public:
-    CTrade ctrade;
-    string advisor_id;
-    ulong magic_number;
-
-    void set_advisor_id(string param_advisor_id) {
+    Strategy(AdvisorArgs& param_args, string param_advisor_id) {
+        this.args = param_args;
         this.advisor_id = param_advisor_id;
-        this.magic_number = this.calculate_magic_number(this.advisor_id);
-        this.ctrade.SetExpertMagicNumber(this.magic_number);
-    }
-
-    ulong market_order(
-        ENUM_ORDER_TYPE order, double volume, string symbol,
-        double price = 0.0, double sl = 0.0, double tp = 0.0, string comment = "") {
-
-        ulong ticket = 0;
-        bool success = false;
-
-        if (order == ORDER_TYPE_BUY)
-            success = market_order_buy(volume, symbol, price, sl, tp, comment);
-
-        if (order == ORDER_TYPE_SELL)
-            success = market_order_sell(volume, symbol, price, sl, tp, comment);
-
-        if (success)
-            ticket = MarketOrder::get_last_ticket();
-
-        return ticket;
-    }
-
-    bool market_order_buy(
-        double volume, string symbol,
-        double price = 0.0, double sl = 0.0, double tp = 0.0, string comment = "") {
-        return this.ctrade.Buy(volume, symbol, price, sl, tp, comment);
-    }
-
-    bool market_order_sell(
-        double volume, string symbol,
-        double price = 0.0, double sl = 0.0, double tp = 0.0, string comment = "") {
-        return this.ctrade.Sell(volume, symbol, price, sl, tp, comment);
-    }
-
-    bool set_position(ulong ticket, double sl, double tp) {
-        return this.ctrade.PositionModify(ticket, sl, tp);
+        set_magic_number();
     }
 
     virtual void on_init() {
@@ -109,46 +60,112 @@ class Strategy {
         const MqlTradeResult& result) {
         // to be implemented by specific strategies
     }
-};
 
-class NewRateBased : public Strategy {
-  public:
-    MqlDateTime last_rate_time;
+  protected:
+    AdvisorArgs args;
+    string advisor_id;
+    ulong magic_number;
+    CTrade ctrade;
 
-    NewRateBased() {
-        get_last_rate_time(this.last_rate_time);
+    void set_magic_number() {
+        this.magic_number = this.calculate_magic_number(this.advisor_id);
+        this.ctrade.SetExpertMagicNumber(this.magic_number);
     }
 
-    void get_last_rate_time(MqlDateTime& dest) {
-        datetime time = iTime(_Symbol, _Period, 1);
-        TimeToStruct(time, dest);
+    ulong calculate_magic_number(string hash_base) {
+        ulong hash = 0;
+        for (int i = 0; i < StringLen(hash_base); i++)
+            hash += (ulong)StringGetCharacter(hash_base, i);
+        return hash;
     }
 
-    bool is_new_rate() {
+    void log(string message) {
+        if (args.general.log_file)
+            LogUtils::log(this.advisor_id, message);
+        Print(message);
+    }
 
-        MqlDateTime new_value;
-        get_last_rate_time(new_value);
+    bool has_open_positions() {
+        return MarketOrder::has_open_positions(this.magic_number);
+    }
 
-        bool diff_day = this.last_rate_time.day_of_year != new_value.day_of_year;
-        bool diff_hour = this.last_rate_time.hour != new_value.hour;
-        bool diff_min = this.last_rate_time.min != new_value.min;
+    void close_open_positions() {
+        ulong tickets[];
+        MarketOrder::get_open_positions(tickets, this.magic_number);
 
-        if (diff_day || diff_hour || diff_min) {
-            this.last_rate_time = new_value;
-            return true;
+        for (int i = 0; i < ArraySize(tickets); i++)
+            this.ctrade.PositionClose(tickets[i]);
+    }
+
+    ulong market_order_delayed_tp(
+        ENUM_ORDER_TYPE order, double volume, string symbol,
+        double price, double sl, double reward_ratio, string comment = "") {
+
+        ulong ticket = market_order(order, volume, symbol, price, sl, 0.0, comment);
+        if (ticket == 0) {
+            log("Error placing order");
+            return ticket;
         }
 
-        return false;
+        if (!update_position_tp(order, ticket, reward_ratio)) {
+            log(StringFormat(
+                "Error updating position TP %s",
+                IntegerToString(ticket)));
+        }
+
+        return ticket;
     }
 
-    void base_on_timer() override {
-        on_timer();
+    bool update_position_tp(ENUM_ORDER_TYPE order_type, ulong ticket, double reward_ratio) {
 
-        if (is_new_rate())
-            on_new_rate();
+        if (!PositionSelectByTicket(ticket)) {
+            log(StringFormat(
+                "update_position_tp: Error selecting ticket %s",
+                IntegerToString(ticket)));
+            return false;
+        }
+
+        double entry_price = PositionGetDouble(POSITION_PRICE_OPEN);
+        double stop_loss = PositionGetDouble(POSITION_SL);
+
+        double tp = MarketOrder::calculate_take_profit_price(
+            order_type, entry_price, stop_loss, reward_ratio);
+
+        return set_position(ticket, stop_loss, tp);
     }
 
-    virtual void on_new_rate() {
-        // to be implemented by specific strategies
+    ulong market_order(
+        ENUM_ORDER_TYPE order, double volume, string symbol,
+        double price = 0.0, double sl = 0.0, double tp = 0.0, string comment = "") {
+
+        ulong ticket = 0;
+        bool success = false;
+
+        if (order == ORDER_TYPE_BUY)
+            success = market_order_buy(volume, symbol, price, sl, tp, comment);
+
+        if (order == ORDER_TYPE_SELL)
+            success = market_order_sell(volume, symbol, price, sl, tp, comment);
+
+        if (success)
+            ticket = MarketOrder::get_last_ticket();
+
+        return ticket;
+    }
+
+    bool market_order_buy(
+        double volume, string symbol,
+        double price = 0.0, double sl = 0.0, double tp = 0.0, string comment = "") {
+        return this.ctrade.Buy(volume, symbol, price, sl, tp, comment);
+    }
+
+    bool market_order_sell(
+        double volume, string symbol,
+        double price = 0.0, double sl = 0.0, double tp = 0.0, string comment = "") {
+        return this.ctrade.Sell(volume, symbol, price, sl, tp, comment);
+    }
+
+    bool set_position(ulong ticket, double sl, double tp) {
+        return this.ctrade.PositionModify(ticket, sl, tp);
     }
 };

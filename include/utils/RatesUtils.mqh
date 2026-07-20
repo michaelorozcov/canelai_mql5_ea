@@ -1,6 +1,6 @@
-#include "ArrayUtils.mqh"
-#include "ChartUtils.mqh"
-#include "Constants.mqh"
+#include "./../../include/utils/ArrayUtils.mqh"
+#include "./../../include/utils/Constants.mqh"
+#include "./../../include/utils/ChartUtils.mqh"
 
 class RatesUtils {
 

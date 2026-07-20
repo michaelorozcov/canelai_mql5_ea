@@ -1,3 +1,13 @@
+#include "./../../include/dto/PivotPoint.mqh"
+#include "./../../include/dto/Trend.mqh"
+
+#include "./../../include/utils/ArrayUtils.mqh"
+#include "./../../include/utils/ChartUtils.mqh"
+#include "./../../include/utils/Constants.mqh"
+#include "./../../include/utils/RatesUtils.mqh"
+
+#include "./../../include/market/MarketPivot.mqh"
+
 class MarketTrend {
 
   private:

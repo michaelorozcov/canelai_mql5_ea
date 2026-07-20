@@ -11,15 +11,6 @@ static const double TF_BREAKOUT_SIZE_FACTOR_MIN = 1.5;
 static const double TF_BREAKOUT_SIZE_FACTOR_MAX = 3.0;
 static const bool TF_BREAKOUT_VOLUME_CHECK = false;
 
-static const double TF_RISK_PERCENTAGE = 1.0;
-static const double TF_RISK_REWARD_RATIO = 3.0;
-
-static const double TF_BREAKEVEN_VALUE = 0;
-
-static const int TF_DAILY_LIMIT_LOSSES = 1;
-static const int TF_DAILY_LIMIT_WINS = 1;
-static const double TF_MONTHLY_LIMIT_PERCENTAGE = 0.0;
-
 struct TrendFollowArgs {
 
     int analysis_shift_minutes;
@@ -35,16 +26,6 @@ struct TrendFollowArgs {
     double breakout_size_factor_max;
     bool breakout_volume_check;
 
-    double risk_percentage;
-    double risk_reward_ratio;
-
-    double breakeven_value;
-
-    int daily_limit_losses;
-    int daily_limit_wins;
-
-    double monthly_limit_percentage;
-
     TrendFollowArgs() {
 
         analysis_shift_minutes = TF_ANALYSIS_SHIFT_MINUTES;
@@ -59,15 +40,5 @@ struct TrendFollowArgs {
         breakout_size_factor_min = TF_BREAKOUT_SIZE_FACTOR_MIN;
         breakout_size_factor_max = TF_BREAKOUT_SIZE_FACTOR_MAX;
         breakout_volume_check = TF_BREAKOUT_VOLUME_CHECK;
-
-        risk_percentage = TF_RISK_PERCENTAGE;
-        risk_reward_ratio = TF_RISK_REWARD_RATIO;
-
-        breakeven_value = TF_BREAKEVEN_VALUE;
-
-        daily_limit_losses = TF_DAILY_LIMIT_LOSSES;
-        daily_limit_wins = TF_DAILY_LIMIT_WINS;
-
-        monthly_limit_percentage = TF_MONTHLY_LIMIT_PERCENTAGE;
     }
 };
