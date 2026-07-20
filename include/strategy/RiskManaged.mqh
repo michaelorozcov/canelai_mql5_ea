@@ -321,7 +321,7 @@ class RiskManaged : public Strategy {
 
         double ticks = (distance / tick_size);
         double risk_per_lot = (ticks * tick_value);
-        double volume = NormalizeDouble((amount / risk_per_lot), VOLUME_DIGITS);
+        double volume = (amount / risk_per_lot);
 
         return normalize_volume(volume);
     }
@@ -345,7 +345,7 @@ class RiskManaged : public Strategy {
         volume = min_value + MathFloor(((volume - min_value) / step) + VOLUME_EPSILON) * step;
 
         // TODO: check if required in other stocks
-        // int digits = (int)MathRound(-MathLog10(step));
-        return NormalizeDouble(volume, VOLUME_DIGITS);
+        int digits = (int)MathRound(-MathLog10(step));
+        return NormalizeDouble(volume, digits);
     }
 };
