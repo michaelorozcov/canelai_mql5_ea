@@ -9,19 +9,17 @@ class NewRateBased : public RiskManaged {
         get_last_rate_time(this.last_rate_time);
     }
 
+    void on_timer() override {
+        if (is_new_rate())
+            on_new_rate();
+    }
+
   protected:
     MqlDateTime last_rate_time;
 
     void get_last_rate_time(MqlDateTime& dest) {
         datetime time = iTime(_Symbol, _Period, 1);
         TimeToStruct(time, dest);
-    }
-
-    void base_on_timer() override {
-        on_timer();
-
-        if (is_new_rate())
-            on_new_rate();
     }
 
     bool is_new_rate() {

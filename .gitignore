@@ -42,5 +42,5 @@
 *.dwo
 
 # Custom
-include/strategy/**/analysis_notebook/csv_files/*.csv
-include/strategy/**/analysis_notebook/.ipynb_checkpoints/*.ipynb
+include/strategy/**/csv_files/*.csv
+include/strategy/**/.ipynb_checkpoints/*.ipynb

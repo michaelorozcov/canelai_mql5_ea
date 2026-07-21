@@ -125,11 +125,15 @@ class MarketPivot {
         ArrayUtils::clear(lows_order_1);
     }
 
-    static void set_pivot_points(int lowest_rate_index, bool visual_mode) {
+    static void set_pivot_points(
+        int lowest_rate_index, bool visual_mode, int strength = -1) {
+
         delete_pivot_points();
 
+        if (strength == -1)
+            strength = FIRST_ORDER_PIVOT_STRENGTH;
+
         // Order 1
-        int strength = FIRST_ORDER_PIVOT_STRENGTH;
         int start = RatesUtils::get_highest_rate_index() - strength;
         int end = lowest_rate_index + strength;
 

@@ -9,7 +9,11 @@
 #include "./../include/market/MarketOrder.mqh"
 
 #include "./../include/strategy/Strategy.mqh"
+
 #include "./../include/strategy/trend_follow/TrendFollow.mqh"
+
+#include "./../include/strategy/block_reversion/BlockReversion.mqh"
+#include "./../include/strategy/block_reversion/BlockReversionAnalysis.mqh"
 
 class Advisor {
   public:
@@ -99,6 +103,12 @@ class Advisor {
 
         if (args.general.strategy == TREND_FOLLOW)
             strategy = new TrendFollow(args, status.advisor_id);
+
+        if (args.general.strategy == BLOCK_REVERSION) {
+            strategy = (args.block_reversion.analysis_mode)
+                           ? new BlockReversionAnalysis(args, status.advisor_id)
+                           : new BlockReversion(args, status.advisor_id);
+        }
     }
 
     static void process_deinit() {

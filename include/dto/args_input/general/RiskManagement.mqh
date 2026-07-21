@@ -28,6 +28,7 @@ struct RiskManagement {
     double reward_ratio;
     double breakeven;
     double trailing_stop;
+    double time_limit;
 
     DailyLimit daily_limit_won;
     DailyLimit daily_limit_lost;
@@ -36,5 +37,6 @@ struct RiskManagement {
         reward_ratio = 0.0;
         breakeven = 0.0;
         trailing_stop = 0.0;
+        time_limit = 0.0;
     }
 };

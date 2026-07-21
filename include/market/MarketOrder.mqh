@@ -130,4 +130,10 @@ class MarketOrder {
                 today_won_trades++;
         }
     }
+
+    static void get_current_price(string symbol, double& ask, double& bid, double& current) {
+        ask = SymbolInfoDouble(symbol, SYMBOL_ASK);
+        bid = SymbolInfoDouble(symbol, SYMBOL_BID);
+        current = ((ask + bid) / 2);
+    }
 };

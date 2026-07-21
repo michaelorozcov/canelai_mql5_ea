@@ -2,6 +2,8 @@
 
 #include "./../../include/utils/Constants.mqh"
 
+#include "./../../include/market/MarketOrder.mqh"
+
 #include "./../../include/strategy/Strategy.mqh"
 
 #include "./../../include/Advisor.mqh"
@@ -31,6 +33,10 @@ class RiskManaged : public Strategy {
 
     void base_on_tick() override {
         process_on_tick();
+    }
+
+    void base_on_timer() override {
+        process_on_timer();
     }
 
   protected:
@@ -388,5 +394,46 @@ class RiskManaged : public Strategy {
         // TODO: check if required in other stocks
         int digits = (int)MathRound(-MathLog10(step));
         return NormalizeDouble(volume, digits);
+    }
+
+    void process_on_timer() {
+
+        if ((this.args.risk.time_limit > 0)) {
+
+            ulong tickets[];
+            MarketOrder::get_open_positions(tickets, this.magic_number);
+
+            for (int i = 0; i < ArraySize(tickets); i++) {
+                check_position_time(tickets[i]);
+            }
+        }
+
+        on_timer();
+    }
+
+    void check_position_time(ulong ticket) {
+
+        if (!PositionSelectByTicket(ticket)) {
+            log(StringFormat(
+                "check_position_time: Error selecting ticket %s",
+                IntegerToString(ticket)));
+            return;
+        }
+
+        datetime time_open = (datetime)PositionGetInteger(POSITION_TIME);
+        int seconds_open = (int)(TimeGMT() - time_open);
+        int minutes_open = seconds_open / 60;
+
+        if (minutes_open >= this.args.risk.time_limit) {
+            log(StringFormat(
+                "Closing position by time limit: %s - %s [%s limit]",
+                IntegerToString(ticket),
+                IntegerToString(minutes_open),
+                DoubleToString(this.args.risk.time_limit, 0)
+                //
+                ));
+
+            close_open_position(ticket);
+        }
     }
 };

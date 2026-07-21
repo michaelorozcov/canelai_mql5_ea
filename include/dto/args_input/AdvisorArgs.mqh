@@ -1,5 +1,6 @@
 #include "./../../../include/dto/args_input/general/GeneralArgs.mqh"
 #include "./../../../include/dto/args_input/general/RiskManagement.mqh"
+#include "./../../../include/dto/args_input/strategy/BlockReversionArgs.mqh"
 #include "./../../../include/dto/args_input/strategy/TrendFollowArgs.mqh"
 
 struct AdvisorArgs {
@@ -10,4 +11,5 @@ struct AdvisorArgs {
 
     // Strategies
     TrendFollowArgs trend_follow;
+    BlockReversionArgs block_reversion;
 };

@@ -268,13 +268,24 @@ class MarketStructure {
             draw_structure_blocks();
     }
 
-    static void get_latest_blocks(StructureBlock& dest[], int amount) {
+    static void get_latest_blocks(StructureBlock& dest[], int amount = WHOLE_ARRAY) {
+
+        if (amount == WHOLE_ARRAY) {
+            ArrayCopy(dest, structure_blocks_impulses);
+            return;
+        }
 
         if (amount > ArraySize(structure_blocks_impulses))
             return;
 
         int start = ArraySize(structure_blocks_impulses) - amount;
         ArrayCopy(dest, structure_blocks_impulses, 0, start, amount);
+    }
+
+    static void get_latest_block(StructureBlock& dest) {
+        StructureBlock blocks[];
+        get_latest_blocks(blocks, 1);
+        ArrayUtils::get_last_item(dest, blocks);
     }
 
     static double get_block_strength(StructureBlock& block) {

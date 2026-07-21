@@ -102,7 +102,11 @@ class Strategy {
         MarketOrder::get_open_positions(tickets, this.magic_number);
 
         for (int i = 0; i < ArraySize(tickets); i++)
-            this.ctrade.PositionClose(tickets[i]);
+            close_open_position(tickets[i]);
+    }
+
+    bool close_open_position(ulong ticket) {
+        return this.ctrade.PositionClose(ticket);
     }
 
     ulong market_order_delayed_tp(
