@@ -65,7 +65,7 @@ class Advisor {
         set_active_status_by_trading_time();
 
         if (is_advisor_ready())
-            strategy.on_init();
+            strategy.base_on_init();
     }
 
     static void init_advisor_status() {
@@ -103,7 +103,7 @@ class Advisor {
 
     static void process_deinit() {
         if (has_strategy_instance()) {
-            strategy.on_deinit();
+            strategy.base_on_deinit();
             delete_strategy_instance();
         }
 

@@ -14,6 +14,10 @@ class RiskManaged : public Strategy {
         this.trailing_stop_unit = 0.0;
     }
 
+    void base_on_init() override {
+        process_on_init();
+    }
+
     void base_on_trading_time_change(bool trading_time) override {
         process_on_trading_time_change(trading_time);
     }
@@ -33,6 +37,14 @@ class RiskManaged : public Strategy {
     bool breakeven_applied;
     double trailing_stop_unit;
 
+    void process_on_init() {
+        if (has_reached_limit()) {
+            turn_off_by_limits();
+        } else {
+            on_init();
+        }
+    }
+
     void process_on_trading_time_change(bool trading_time) {
 
         if (!trading_time && has_open_positions()) {
@@ -49,8 +61,7 @@ class RiskManaged : public Strategy {
         const MqlTradeResult& result) {
 
         if (is_close_transaction(trans) && has_reached_limit()) {
-            log("It has reached trading limits");
-            Advisor::set_active_status(false, OFF_BY_LIMITS);
+            turn_off_by_limits();
         }
 
         on_trade_transaction(trans, request, result);
@@ -97,15 +108,40 @@ class RiskManaged : public Strategy {
             DoubleToString(today_won_trades, 0),
             DoubleToString(today_lost_trades, 0)));
 
-        double today_trades = today_won_trades;
+        bool daily_limit_won = has_reached_limit_daily_won(
+            today_profit, today_won_trades);
+
+        bool daily_limit_lost = has_reached_limit_daily_lost(
+            today_profit, today_lost_trades);
+
+        return (daily_limit_won || daily_limit_lost);
+    }
+
+    bool has_reached_limit_daily_won(double today_profit, double today_trades) {
+
         DailyLimit daily_limit = this.args.risk.daily_limit_won;
 
-        if (today_profit < 0) {
-            today_trades = today_lost_trades;
-            daily_limit = this.args.risk.daily_limit_lost;
+        if (is_amount_limit(daily_limit) && (today_profit < 0)) {
+            return false;
         }
 
         return has_reached_limit_daily_value(daily_limit, today_profit, today_trades);
+    }
+
+    bool has_reached_limit_daily_lost(double today_profit, double today_trades) {
+
+        DailyLimit daily_limit = this.args.risk.daily_limit_lost;
+
+        if (is_amount_limit(daily_limit) && (today_profit > 0)) {
+            return false;
+        }
+
+        return has_reached_limit_daily_value(daily_limit, today_profit, today_trades);
+    }
+
+    bool is_amount_limit(DailyLimit& daily_limit) {
+        return ((DAILY_LIMIT_AMOUNT == daily_limit.type) ||
+                (DAILY_LIMIT_PCT == daily_limit.type));
     }
 
     bool has_reached_limit_daily_value(
@@ -130,6 +166,11 @@ class RiskManaged : public Strategy {
         }
 
         return false;
+    }
+
+    void turn_off_by_limits() {
+        log("It has reached trading limits");
+        Advisor::set_active_status(false, OFF_BY_LIMITS);
     }
 
     void process_on_tick() {
