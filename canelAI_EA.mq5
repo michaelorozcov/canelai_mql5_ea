@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Copyright 2026, MetaQuotes Ltd."
 #property link "https://www.mql5.com"
-#property version "2.9"
+#property version "2.10"
 
 #include "include/dto/args_input/AdvisorArgs.mqh"
 #include "include/dto/args_input/general/RiskManagement.mqh"

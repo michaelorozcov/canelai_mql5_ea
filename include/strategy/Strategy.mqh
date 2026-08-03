@@ -15,8 +15,16 @@ class Strategy {
         set_magic_number();
     }
 
+    virtual void base_on_init() {
+        on_init();
+    }
+
     virtual void on_init() {
         // to be implemented by specific strategies
+    }
+
+    virtual void base_on_deinit() {
+        on_deinit();
     }
 
     virtual void on_deinit() {
