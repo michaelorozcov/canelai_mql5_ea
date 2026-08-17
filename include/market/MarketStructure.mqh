@@ -70,18 +70,31 @@ class MarketStructure {
     }
 
     static void get_block_from_breakout(
-        StructureBlock& block, BlockBreakout& breakout) {
+        StructureBlock& new_block, StructureBlock& prev_block) {
 
-        block.end = breakout.pivot;
-        MarketPivot::get_previous_opposite_pivot(block.start, block.end);
+        PivotPoint start, end;
+
+        end = prev_block.breakout.pivot;
+        MarketPivot::get_previous_opposite_pivot(start, end);
+
+        int prev_block_end_index = prev_block.end.rate_index;
+        int break_index = prev_block.breakout.pivot.rate_index;
+
+        if (prev_block_end_index == break_index) {
+            end.clone(start);
+            start.type = MarketPivot::get_opposite_pivot_type(end);
+        }
+
+        new_block.start = start;
+        new_block.end = end;
 
         PivotPoint merged_opposite;
         MarketPivot::get_previous_pivot_with_same_opposite(
-            merged_opposite, block.start,
-            breakout.bias, STRUCTURE_MAX_PIVOTS_ANALYSIS);
+            merged_opposite, new_block.start,
+            prev_block.breakout.bias, STRUCTURE_MAX_PIVOTS_ANALYSIS);
 
         if (merged_opposite.is_valid())
-            block.start = merged_opposite;
+            new_block.start = merged_opposite;
     }
 
     static void set_block_breakout(StructureBlock& block) {
@@ -96,32 +109,41 @@ class MarketStructure {
         if (!ceil && !bottom)
             return;
 
-        else if (ceil && bottom)
-            block.breakout = (bottom_breakout.pivot.rate_index > ceil_breakout.pivot.rate_index)
-                                 ? bottom_breakout
-                                 : ceil_breakout;
-
         else if (ceil && !bottom)
             block.breakout = ceil_breakout;
 
         else if (!ceil && bottom)
             block.breakout = bottom_breakout;
+
+        else {
+            int ceil_index = ceil_breakout.pivot.rate_index;
+            int bottom_index = bottom_breakout.pivot.rate_index;
+
+            if (ceil_index == bottom_index) {
+                bool is_bullish_rate = RatesUtils::is_bullish_rate(ceil_index);
+                block.breakout = is_bullish_rate ? bottom_breakout : ceil_breakout;
+
+            } else {
+                block.breakout = (ceil_index > bottom_index) ? ceil_breakout : bottom_breakout;
+            }
+        }
     }
 
     static void get_ceil_breakout(BlockBreakout& breakout, StructureBlock& block) {
 
         PivotPoint ref = block.is_bullish() ? block.end : block.start;
+        double block_price = MarketPivot::get_pivot_price(ref, true);
+        int block_index = block.end.rate_index;
 
         PivotPoint pivots[];
         MarketPivot::get_pivot_points(
-            pivots, ref.type, ref.order, ref.rate_index, STRUCTURE_MAX_PIVOTS_ANALYSIS);
+            pivots, ref.type, ref.order, block_index, STRUCTURE_MAX_PIVOTS_ANALYSIS);
 
         for (int i = 0; i < ArraySize(pivots); i++) {
 
-            if (pivots[i].rate_index >= ref.rate_index)
+            if (pivots[i].rate_index > block_index)
                 continue;
 
-            double block_price = MarketPivot::get_pivot_price(ref, true);
             double pivot_price = MarketPivot::get_pivot_price(pivots[i], false);
 
             if (pivot_price <= block_price)
@@ -153,17 +175,18 @@ class MarketStructure {
     static void get_bottom_breakout(BlockBreakout& breakout, StructureBlock& block) {
 
         PivotPoint ref = block.is_bullish() ? block.start : block.end;
+        double block_price = MarketPivot::get_pivot_price(ref, true);
+        int block_index = block.end.rate_index;
 
         PivotPoint pivots[];
         MarketPivot::get_pivot_points(
-            pivots, ref.type, ref.order, ref.rate_index, STRUCTURE_MAX_PIVOTS_ANALYSIS);
+            pivots, ref.type, ref.order, block_index, STRUCTURE_MAX_PIVOTS_ANALYSIS);
 
         for (int i = 0; i < ArraySize(pivots); i++) {
 
-            if (pivots[i].rate_index >= ref.rate_index)
+            if (pivots[i].rate_index > block_index)
                 continue;
 
-            double block_price = MarketPivot::get_pivot_price(ref, true);
             double pivot_price = MarketPivot::get_pivot_price(pivots[i], false);
 
             if (pivot_price >= block_price)
@@ -230,7 +253,7 @@ class MarketStructure {
                 break;
 
             StructureBlock new_impulse;
-            get_block_from_breakout(new_impulse, previous_impulse.breakout);
+            get_block_from_breakout(new_impulse, previous_impulse);
             set_block_breakout(new_impulse);
 
             if (!new_impulse.is_valid())
