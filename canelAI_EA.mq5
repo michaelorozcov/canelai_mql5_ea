@@ -9,6 +9,7 @@
 
 #include "include/dto/args_input/AdvisorArgs.mqh"
 #include "include/dto/args_input/general/RiskManagement.mqh"
+#include "include/dto/args_input/general/FiboLevels.mqh"
 #include "include/dto/args_input/strategy/StrategyType.mqh"
 
 #include "include/dto/Session.mqh"
@@ -43,6 +44,13 @@ input int tf_structure_blocks_distance_max = 60; // Blocks distance max (in minu
 input bool tf_breakout_delta_check = false;      // Delta check (above zone)
 input bool tf_breakout_volume_check = false;     // Volume check (tick volume)
 
+input group "==== Strategy: Trend Follow Fibo ====";
+input int tfb_shift_minutes = 720;                      // Shift Minutes
+input int tfb_pivot_strength = 5;                       // Pivot Strength
+input ENUM_FIBO_LEVELS tfb_entry_level = FIBO_LEVEL_78; // Entry Level
+input ENUM_FIBO_LEVELS tfb_sl_level = FIBO_LEVEL_100;   // SL Level
+input ENUM_FIBO_LEVELS tfb_tp_level = FIBO_LEVEL_0;     // TP Level
+
 //+------------------------------------------------------------------+
 //| Advisor Arguments                                                |
 //+------------------------------------------------------------------+
@@ -56,6 +64,9 @@ void set_advisor_args() {
     switch (advisor_args.general.strategy) {
     case TREND_FOLLOW:
         set_trend_follow_args();
+        break;
+    case TREND_FOLLOW_FIBO:
+        set_trend_follow_fibo_args();
         break;
     default:
         break;
@@ -90,6 +101,14 @@ void set_trend_follow_args() {
     advisor_args.trend_follow.structure_blocks_distance_max = tf_structure_blocks_distance_max;
     advisor_args.trend_follow.breakout_delta_check = tf_breakout_delta_check;
     advisor_args.trend_follow.breakout_volume_check = tf_breakout_volume_check;
+}
+
+void set_trend_follow_fibo_args() {
+    advisor_args.trend_follow_fibo.analysis_shift_minutes = tfb_shift_minutes;
+    advisor_args.trend_follow_fibo.pivot_strength = tfb_pivot_strength;
+    advisor_args.trend_follow_fibo.entry_level = tfb_entry_level;
+    advisor_args.trend_follow_fibo.sl_level = tfb_sl_level;
+    advisor_args.trend_follow_fibo.tp_level = tfb_tp_level;
 }
 
 //+------------------------------------------------------------------+

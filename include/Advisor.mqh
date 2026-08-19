@@ -10,6 +10,7 @@
 
 #include "./../include/strategy/Strategy.mqh"
 #include "./../include/strategy/trend_follow/TrendFollow.mqh"
+#include "./../include/strategy/trend_follow_fibo/TrendFollowFibo.mqh"
 
 class Advisor {
   public:
@@ -99,6 +100,9 @@ class Advisor {
 
         if (args.general.strategy == TREND_FOLLOW)
             strategy = new TrendFollow(args, status.advisor_id);
+
+        if (args.general.strategy == TREND_FOLLOW_FIBO)
+            strategy = new TrendFollowFibo(args, status.advisor_id);
     }
 
     static void process_deinit() {

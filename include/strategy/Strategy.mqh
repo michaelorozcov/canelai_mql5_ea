@@ -97,6 +97,10 @@ class Strategy {
         return MarketOrder::has_open_positions(this.magic_number);
     }
 
+    bool has_pending_orders() {
+        return MarketOrder::has_pending_orders(this.magic_number);
+    }
+
     void close_open_positions() {
         ulong tickets[];
         MarketOrder::get_open_positions(tickets, this.magic_number);
@@ -171,6 +175,76 @@ class Strategy {
         double volume, string symbol,
         double price = 0.0, double sl = 0.0, double tp = 0.0, string comment = "") {
         return this.ctrade.Sell(volume, symbol, price, sl, tp, comment);
+    }
+
+    ulong limit_order(
+        ENUM_ORDER_TYPE order_type,                      // order type
+        double volume,                                   // order volume
+        double price,                                    // order price
+        const string symbol = NULL,                      // symbol
+        double sl = 0.0,                                 // stop loss price
+        double tp = 0.0,                                 // take profit price
+        ENUM_ORDER_TYPE_TIME type_time = ORDER_TIME_GTC, // order lifetime
+        datetime expiration = 0,                         // order expiration time
+        const string comment = ""                        // comment
+    ) {
+
+        ulong ticket = 0;
+        bool success = false;
+
+        if (order_type == ORDER_TYPE_BUY)
+            success = limit_order_buy(volume, price, symbol, sl, tp, type_time, expiration, comment);
+
+        if (order_type == ORDER_TYPE_SELL)
+            success = limit_order_sell(volume, price, symbol, sl, tp, type_time, expiration, comment);
+
+        if (success)
+            ticket = MarketOrder::get_last_ticket();
+
+        return ticket;
+    }
+
+    bool limit_order_buy(
+        double volume,                                   // order volume
+        double price,                                    // order price
+        const string symbol = NULL,                      // symbol
+        double sl = 0.0,                                 // stop loss price
+        double tp = 0.0,                                 // take profit price
+        ENUM_ORDER_TYPE_TIME type_time = ORDER_TIME_GTC, // order lifetime
+        datetime expiration = 0,                         // order expiration time
+        const string comment = ""                        // comment
+    ) {
+        return this.ctrade.BuyLimit(volume, price, symbol, sl, tp, type_time, expiration, comment);
+    }
+
+    bool limit_order_sell(
+        double volume,                                   // order volume
+        double price,                                    // order price
+        const string symbol = NULL,                      // symbol
+        double sl = 0.0,                                 // stop loss price
+        double tp = 0.0,                                 // take profit price
+        ENUM_ORDER_TYPE_TIME type_time = ORDER_TIME_GTC, // order lifetime
+        datetime expiration = 0,                         // order expiration time
+        const string comment = ""                        // comment
+    ) {
+        return this.ctrade.SellLimit(volume, price, symbol, sl, tp, type_time, expiration, comment);
+    }
+
+    ulong get_last_pending_order() {
+        return this.ctrade.ResultOrder();
+    }
+
+    void delete_pending_orders() {
+
+        ulong tickets[];
+        MarketOrder::get_pending_orders(tickets, this.magic_number);
+
+        for (int i = 0; i < ArraySize(tickets); i++)
+            delete_pending_order(tickets[i]);
+    }
+
+    bool delete_pending_order(ulong ticket) {
+        return this.ctrade.OrderDelete(ticket);
     }
 
     bool set_position(ulong ticket, double sl, double tp) {

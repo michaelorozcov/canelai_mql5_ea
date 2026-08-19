@@ -58,6 +58,16 @@ struct StructureBlock {
             return TREND_RANGING;
     }
 
+    double get_price_top() {
+        PivotPoint pivot = is_bullish() ? end : start;
+        return MarketPivot::get_pivot_price(pivot, true);
+    }
+
+    double get_price_bottom() {
+        PivotPoint pivot = is_bullish() ? start : end;
+        return MarketPivot::get_pivot_price(pivot, true);
+    }
+
     bool is_bullish() {
         return get_trend_type() == TREND_BULLISH;
     }

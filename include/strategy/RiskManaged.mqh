@@ -389,4 +389,28 @@ class RiskManaged : public Strategy {
         int digits = (int)MathRound(-MathLog10(step));
         return NormalizeDouble(volume, digits);
     }
+
+    double calculate_risked_amount() {
+
+        if (this.args.risk.trade_risk.type == TRADE_RISK_AMOUNT)
+            return this.args.risk.trade_risk.value;
+
+        if (this.args.risk.trade_risk.type == TRADE_RISK_PCT) {
+            double pct = this.args.risk.trade_risk.value;
+            double balance = AccountInfoDouble(ACCOUNT_BALANCE);
+            double amount = (balance * (pct / 100.0));
+            return NormalizeDouble(amount, _Digits);
+        }
+
+        return 0;
+    }
+
+    double calculate_order_stop_loss(
+        ENUM_ORDER_TYPE order_type, double volume, double entry_price, double sl_price) {
+
+        double calculated_sl = 0;
+        bool success = OrderCalcProfit(order_type, _Symbol, volume, entry_price, sl_price, calculated_sl);
+
+        return calculated_sl;
+    }
 };

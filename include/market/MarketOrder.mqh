@@ -130,4 +130,37 @@ class MarketOrder {
                 today_won_trades++;
         }
     }
+
+    static bool has_pending_orders(ulong magic_number) {
+        ulong tickets[];
+        get_pending_orders(tickets, magic_number);
+
+        return (ArraySize(tickets) > 0);
+    }
+
+    static void get_pending_orders(ulong& tickets[], ulong magic_number) {
+
+        ArrayUtils::clear(tickets);
+
+        for (int i = 0; i < OrdersTotal(); i++) {
+            ulong ticket = OrderGetTicket(i);
+
+            if (ticket == 0)
+                continue;
+
+            if ((ulong)OrderGetInteger(ORDER_MAGIC) != magic_number)
+                continue;
+
+            ENUM_ORDER_TYPE type = (ENUM_ORDER_TYPE)OrderGetInteger(ORDER_TYPE);
+
+            if (type == ORDER_TYPE_BUY_LIMIT ||
+                type == ORDER_TYPE_SELL_LIMIT ||
+                type == ORDER_TYPE_BUY_STOP ||
+                type == ORDER_TYPE_SELL_STOP ||
+                type == ORDER_TYPE_BUY_STOP_LIMIT ||
+                type == ORDER_TYPE_SELL_STOP_LIMIT) {
+                ArrayUtils::add_item(tickets, ticket);
+            }
+        }
+    }
 };
