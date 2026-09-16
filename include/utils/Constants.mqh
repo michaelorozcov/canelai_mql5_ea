@@ -3,7 +3,7 @@
 
 // Timer
 const int ADVISOR_TIMER_INTERVAL_MILLISECONDS = 1000;
-const int MINUTES_BEFORE_SESSION_CLOSE = 10;
+const int MINUTES_BEFORE_SESSION_CLOSE = 5;
 
 // Logs
 const string LOGS_RELATIVE_PATH = "canelai\\logs\\";

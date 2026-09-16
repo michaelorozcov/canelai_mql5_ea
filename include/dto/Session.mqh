@@ -9,15 +9,17 @@ struct MarketSessionTime {
 
   public:
     ENUM_MARKET_SESSION session;
-    string start;
-    string end;
+    ENUM_DAY_OF_WEEK start_day;
+    string start_time;
+    ENUM_DAY_OF_WEEK end_day;
+    string end_time;
 
     datetime get_time_start(datetime time) {
-        return get_time_based(time, this.start);
+        return get_time_based(time, this.start_time);
     }
 
     datetime get_time_end(datetime time) {
-        return get_time_based(time, this.end);
+        return get_time_based(time, this.end_time);
     }
 
   private:
@@ -41,8 +43,29 @@ struct MarketSessionTime {
 
 // UTC 24hrs
 const MarketSessionTime MARKET_SESSIONS[] = {
-    {ALL, "00:00", "23:59"},
-    {TOKYO, "00:00", "09:00"},
-    {LONDON, "07:00", "16:00"},
-    {NEW_YORK, "12:00", "21:00"},
+    {
+        //
+        ALL,
+        ENUM_DAY_OF_WEEK::MONDAY, "00:00",
+        ENUM_DAY_OF_WEEK::FRIDAY, "21:00"
+        //
+    },
+    {
+        TOKYO,
+        ENUM_DAY_OF_WEEK::SUNDAY, "00:00",
+        ENUM_DAY_OF_WEEK::THURSDAY, "09:00"
+        //
+    },
+    {
+        LONDON,
+        ENUM_DAY_OF_WEEK::MONDAY, "07:00",
+        ENUM_DAY_OF_WEEK::FRIDAY, "16:00"
+        //
+    },
+    {
+        NEW_YORK,
+        ENUM_DAY_OF_WEEK::MONDAY, "12:00",
+        ENUM_DAY_OF_WEEK::FRIDAY, "21:00"
+        //
+    },
 };
