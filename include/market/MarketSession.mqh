@@ -12,22 +12,24 @@ class MarketSession {
         MqlDateTime time_struct;
         TimeToStruct(time, time_struct);
 
-        if (!is_inside_work_day(time_struct))
+        MarketSessionTime session_time = MARKET_SESSIONS[session];
+
+        int day_of_week = time_struct.day_of_week;
+        bool in_session_days = ((day_of_week >= session_time.start_day) &&
+                                (day_of_week <= session_time.end_day));
+
+        if (!in_session_days)
             return false;
 
-        return is_inside_session(time, session, MINUTES_BEFORE_SESSION_CLOSE);
-    }
+        if ((session == ENUM_MARKET_SESSION::ALL) &&
+            (day_of_week != ENUM_DAY_OF_WEEK::FRIDAY))
+            return true;
 
-    static ENUM_MARKET_SESSION get_session_by_time(datetime time) {
-        ENUM_MARKET_SESSION result = ALL;
+        datetime time_start = session_time.get_time_start(time);
+        datetime time_end = session_time.get_time_end(time);
+        subtract_minutes(time_end, MINUTES_BEFORE_SESSION_CLOSE);
 
-        for (int i = 0; i < ArraySize(MARKET_SESSIONS); i++) {
-            MarketSessionTime session_time = MARKET_SESSIONS[i];
-            if (is_inside_session_time(time, session_time))
-                result = session_time.session;
-        }
-
-        return result;
+        return ((time >= time_start) && (time < time_end));
     }
 
     static datetime get_today_init_time() {
@@ -73,38 +75,6 @@ class MarketSession {
     }
 
   private:
-    static bool is_inside_work_day(MqlDateTime& date_struct) {
-        int day = date_struct.day_of_week;
-        return (day >= ENUM_DAY_OF_WEEK::MONDAY) && (day <= ENUM_DAY_OF_WEEK::FRIDAY);
-    }
-
-    static bool is_inside_session(
-        datetime time, ENUM_MARKET_SESSION session, int shift_minutes = 0) {
-
-        MarketSessionTime session_time;
-        get_market_session_time(session, session_time);
-
-        return is_inside_session_time(time, session_time, shift_minutes);
-    }
-
-    static void get_market_session_time(
-        ENUM_MARKET_SESSION session,
-        MarketSessionTime& session_time) {
-        session_time = MARKET_SESSIONS[session];
-    }
-
-    static bool is_inside_session_time(
-        datetime time, MarketSessionTime& session_time, int shift_minutes = 0) {
-
-        datetime session_time_start = session_time.get_time_start(time);
-        datetime session_time_end = session_time.get_time_end(time);
-
-        if (shift_minutes > 0)
-            subtract_minutes(session_time_end, shift_minutes);
-
-        return (time >= session_time_start) && (time < session_time_end);
-    }
-
     static void subtract_minutes(datetime& date, int minutes) {
         int seconds_to_subtract = MathAbs(minutes * 60);
         date -= seconds_to_subtract;
